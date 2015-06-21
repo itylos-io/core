@@ -1,0 +1,17 @@
+[
+    {
+        "id": "1",
+        "name": "400MHZ 2262",
+        "description": "Cheap wireless sensors based on 2262 protocol with no encryption"
+    },
+    {
+        "id": "2",
+        "name": "NRF24L01",
+        "description": "2.4GHz wireless sensors"
+    },
+    {
+        "id": "3",
+        "name": "Custom",
+        "description": "Custom"
+    }
+]
