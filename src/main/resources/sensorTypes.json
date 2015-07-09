@@ -1,17 +1,14 @@
 [
     {
         "id": "1",
-        "name": "400MHZ 2262",
-        "description": "Cheap wireless sensors based on 2262 protocol with no encryption"
+        "name": "Door/Window Sensor with battery support",
+        "description": "Door or window sensor that sends battery status level",
+        "isBatteryPowered": true
     },
     {
         "id": "2",
-        "name": "NRF24L01",
-        "description": "2.4GHz wireless sensors"
-    },
-    {
-        "id": "3",
-        "name": "Custom",
-        "description": "Custom"
+        "name": "Door/Window Sensor without battery support",
+        "description": "Door or window sensor that does not provide info about the battery level",
+        "isBatteryPowered": false
     }
 ]
