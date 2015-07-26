@@ -9,7 +9,8 @@ case class SettingsDto(systemSettings: SystemSettingsDto,
                        emailSettings: EmailSettingsDto,
                        nexmoSettings: NexmoSettingsDto,
                        webHookSettings: WebHookSettingsDto,
-                       pushBulletSettings: PushBulletSettingsDto) {
+                       pushBulletSettings: PushBulletSettingsDto,
+                       kerberosSettings: KerberosSettingsDto) {
 
 
   /**
@@ -22,7 +23,8 @@ case class SettingsDto(systemSettings: SystemSettingsDto,
       new EmailSettingsDto(settings.emailSettings),
       new NexmoSettingsDto(settings.nexmoSettings),
       new WebHookSettingsDto(settings.webHookSettings),
-      new PushBulletSettingsDto(settings.pushBulletSettings)
+      new PushBulletSettingsDto(settings.pushBulletSettings),
+      new KerberosSettingsDto(settings.kerberosSettings)
     )
   }
 

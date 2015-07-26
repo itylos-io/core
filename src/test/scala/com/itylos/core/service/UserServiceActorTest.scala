@@ -26,8 +26,8 @@ with BeforeAndAfterEach {
   val actorRef = TestActorRef(Props(new UserServiceActor() with TestEnvironmentRepos {}))
 
   // Common variables to all tests
-  val user = new User(Some("userOid"), "userName", "userEmail", List(), "webPass", "alarmPass")
-  val defaultAdminUser = User(None, "admin", "admin@myhome.com", List(), "123456", "123456", 1000, isAdmin = true)
+  val user = new User(Some("userOid"), "userName", "userEmail",  "webPass", "alarmPass")
+  val defaultAdminUser = User(None, "admin", "admin@myhome.com",  "1234", "123456", 1000, isAdmin = true)
 
   // Setup expected responses
   val userDtos = List(new UserDto(user), new UserDto(defaultAdminUser))

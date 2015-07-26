@@ -1,14 +1,32 @@
 [
     {
         "id": "1",
-        "name": "Door/Window Sensor with battery support",
+        "name": "Door/Window sensor with battery support",
         "description": "Door or window sensor that sends battery status level",
         "isBatteryPowered": true
     },
     {
         "id": "2",
-        "name": "Door/Window Sensor without battery support",
+        "name": "Door/Window sensor without battery support",
         "description": "Door or window sensor that does not provide info about the battery level",
+        "isBatteryPowered": false
+    },
+    {
+        "id": "3",
+        "name": "Movement sensor with battery support",
+        "description": "Movement sensor that sends battery status level",
+        "isBatteryPowered": true
+    },
+    {
+        "id": "4",
+        "name": "Movement sensor without battery support",
+        "description": "Movement sensor that does not provide info about the battery level",
+        "isBatteryPowered": false
+    },
+    {
+        "id": "5",
+        "name": "Kerberos",
+        "description": "Kerberos setup. (Configure webhooks in kerberos instance to point to your itylos setup)",
         "isBatteryPowered": false
     }
 ]

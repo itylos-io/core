@@ -13,7 +13,6 @@ import org.json4s.JsonAST.JObject
 case class User(var oid: Option[String],
                 var name: String,
                 var email: String,
-                var phones: List[String],
                 var webPassword: String,
                 var alarmPassword: String,
                 var dateRegistered: Long = new DateTime().getMillis,
@@ -28,7 +27,7 @@ case class User(var oid: Option[String],
 
 
   def this() {
-    this(None, "", "", List(), "", "", 0L, true)
+    this(None, "", "",  "", "", 0L, true)
   }
 
   /**
@@ -40,7 +39,6 @@ case class User(var oid: Option[String],
     oid = getParameter(data, "oid", isIdRequired)
     name = getParameter(data, "name").get
     email = getParameter(data, "email").get
-    phones = getList(data, "phones", true).get.asInstanceOf[List[String]]
     webPassword = getParameter(data, "webPassword").get
     alarmPassword = getParameter(data, "alarmPassword").get
     dateRegistered = new DateTime().getMillis
@@ -56,7 +54,6 @@ case class User(var oid: Option[String],
       Some(obj.get("_id").toString),
       obj.getAs[String]("name").get,
       obj.getAs[String]("email").get,
-      obj.getAs[List[String]]("phones").get,
       obj.getAs[String]("webPassword").get,
       obj.getAs[String]("alarmPassword").get,
       obj.getAs[Long]("dateRegistered").get,
@@ -72,7 +69,6 @@ case class User(var oid: Option[String],
     if (oid != None) builder += ("_id" -> oid)
     builder += ("name" -> name)
     builder += ("email" -> email)
-    builder += ("phones" -> phones)
     builder += ("webPassword" -> webPassword)
     builder += ("alarmPassword" -> alarmPassword)
     builder += ("dateRegistered" -> dateRegistered)

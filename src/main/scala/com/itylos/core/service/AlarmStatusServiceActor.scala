@@ -3,7 +3,7 @@ package com.itylos.core.service
 import akka.actor.{Actor, ActorLogging, Props}
 import com.itylos.core.dao._
 import com.itylos.core.domain._
-import com.itylos.core.exception.{ARMED, CannotArmWithNoEnabledZone}
+import com.itylos.core.exception.{ARMED, CannotArmWithNoEnabledZone, FalsePasswordException}
 import com.itylos.core.rest.dto._
 import com.itylos.core.service.protocol._
 import org.joda.time.DateTime
@@ -40,18 +40,23 @@ class AlarmStatusServiceActor extends Actor with ActorLogging with Notifications
       }
 
     // --- Update status of the alarm --- //
-    case UpdateAlarmStatus(status, user) =>
-      // Assert there is at least one enabled zone
-      val enabledZones = zoneStatusDao.getAllZonesStatus.filter(z => z.status == ENABLED)
-      if (enabledZones.isEmpty) {
-        throw new CannotArmWithNoEnabledZone()
-      }
+    case UpdateAlarmStatus(status,password, user) =>
+
       // Change state
       val alarmStatus = alarmStatusDao.getAlarmStatus.get
       if (status == ARMED) {
+        // Assert there is at least one enabled zone
+        if (zoneStatusDao.getAllZonesStatus.filter(z => z.status == ENABLED).isEmpty) {
+          throw new CannotArmWithNoEnabledZone()
+        }
         alarmStatus.timeArmed = new DateTime().getMillis
         alarmStatus.userIdArmed = user.oid.get
       } else {
+        if (user.alarmPassword != password) {
+          alarmStatus.falseEnteredPasswords = alarmStatus.falseEnteredPasswords+1
+          alarmStatusDao.update(alarmStatus)
+          throw new FalsePasswordException()
+        }
         alarmStatus.resetAlarmStatus()
         alarmStatus.timeDisArmed = new DateTime().getMillis
         alarmStatus.userIdDisarmed = user.oid.get
@@ -59,7 +64,7 @@ class AlarmStatusServiceActor extends Actor with ActorLogging with Notifications
       alarmStatus.status = status
       alarmStatusDao.update(alarmStatus)
       updateHistory(alarmStatus)
-      notifyAll(context,UpdatedAlarmStatusNotification(new AlarmStatusDto(alarmStatusDao.getAlarmStatus.get, user)))
+      notifyAll(context, UpdatedAlarmStatusNotification(new AlarmStatusDto(alarmStatusDao.getAlarmStatus.get, user)))
       sender() ! AlarmStatusRs(new AlarmStatusDto(alarmStatus, user))
 
     // --- Get alarm status history --- //

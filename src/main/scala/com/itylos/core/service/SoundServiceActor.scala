@@ -5,7 +5,6 @@ import javax.sound.sampled._
 
 import akka.actor._
 import com.itylos.core.dao.SettingsComponent
-import com.itylos.core.domain.OPEN
 import com.itylos.core.service.protocol.{AlarmTriggeredNotification, NewSensorEventNotification, UpdatedAlarmStatusNotification}
 
 /**
@@ -34,7 +33,7 @@ class SoundServiceActor extends Actor with ActorLogging {
     // --- New sensor event --- //
     case NewSensorEventNotification(sensor, sensorEvent) =>
       if (settingsDao.getSettings.get.systemSettings.playSoundsForSensorEvents) {
-        if (sensorEvent.status == OPEN) playSound("open.wav") else playSound("closed.wav")
+        if (sensorEvent.status == 1) playSound("open.wav") else playSound("closed.wav")
       }
 
     // --- Alarm triggered --- //

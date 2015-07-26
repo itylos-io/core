@@ -28,7 +28,7 @@ with BeforeAndAfterEach {
   // Common variables to all tests
   val sensorId = "200"
   val sensorOId = "sensorOId"
-  val sensorEvent = new SensorEvent(None, sensorId, OPEN, 100, 1000L)
+  val sensorEvent = new SensorEvent(None, sensorId, 1, 100, 1000L)
   val sensor = Sensor(Some(sensorOId), sensorId, "sName", "sDesc", "sLoc", "1", isActive = true, 1000L)
   val sensorType = SensorType("1", "name", "description", isBatteryPowered = true)
 
@@ -49,6 +49,7 @@ with BeforeAndAfterEach {
   override def beforeEach(): Unit = {
     reset(sensorEventDao)
     reset(sensorDao)
+    when(sensorEventDao.getSensorEvents(Some(sensorId), 1000, 0)).thenReturn(List())
   }
 
   "A SensorEventServiceActor" must {
@@ -70,11 +71,11 @@ with BeforeAndAfterEach {
   }
   "submit new sensor and set battery to -1 if sensor is not battery powered" in {
     val thisSensorType = SensorType("1", "name", "description", isBatteryPowered = false)
-    val thisSensorEvent = new SensorEvent(None, sensorId, OPEN, 100, 1000L)
+    val thisSensorEvent = new SensorEvent(None, sensorId, 1, 100, 1000L)
     when(sensorDao.getSensorBySensorId(sensorEvent.sensorId)).thenReturn(Some(sensor))
     when(sensorTypeDao.getSensorTypeByObjectId(sensor.sensorTypeId)).thenReturn(Some(thisSensorType))
     actorRef ! AddSensorEventRq(thisSensorEvent)
-    val expectedMessage = new SensorEvent(None, sensorId, OPEN, -1, 1000L)
+    val expectedMessage = new SensorEvent(None, sensorId, 1, -1, 1000L)
     soundServiceActorProbe.expectMsg(new NewSensorEventNotification(sensor, expectedMessage))
     webSocketActorProbe.expectMsg(Event(new NewSensorEventNotification(sensor, expectedMessage)))
     pushBulletServiceActorProbe.expectMsg(new NewSensorEventNotification(sensor, expectedMessage))

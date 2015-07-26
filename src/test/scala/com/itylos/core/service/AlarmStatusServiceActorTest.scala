@@ -6,7 +6,7 @@ import com.itylos.controller.StopSystemAfterAll
 import com.itylos.core.dao.TestEnvironmentRepos
 import com.itylos.core.domain._
 import com.itylos.core.exception.{ARMED, CannotArmWithNoEnabledZone, DISARMED}
-import com.itylos.core.rest.dto.{AlarmStatusDto, AlarmStatusHistoryDto, UserDto}
+import com.itylos.core.rest.dto.{AlarmStatusDto, AlarmStatusHistoryDto}
 import com.itylos.core.service.protocol._
 import org.joda.time.DateTimeUtils
 import org.mockito.Mockito
@@ -30,7 +30,7 @@ with BeforeAndAfterEach {
   val zoneId = "zoneId"
   val sensorOId = "sensorOId"
   val zonesStatus = ZoneStatus(zoneId, ENABLED)
-  val user = new User(Some("userOid"), "userName", "userEmail", List(), "webPass", "alarmPass")
+  val user = new User(Some("userOid"), "userName", "userEmail", "webPass", "alarmPass")
 
   // Expected responses
   val zone = new Zone(Some(zoneId), "zName", "zDesc", List(sensorOId), 15L)
@@ -65,9 +65,11 @@ with BeforeAndAfterEach {
       verify(alarmStatusDao, times(0)).save(new AlarmStatus())
     }
     "throw exception when trying to arm system and no zone is enabled" in {
+      val alarmStatus = AlarmStatus()
+      when(alarmStatusDao.getAlarmStatus).thenReturn(Some(alarmStatus))
       when(zoneStatusDao.getAllZonesStatus).thenReturn(List(ZoneStatus(zoneId, DISABLED)))
       intercept[CannotArmWithNoEnabledZone] {
-        actorRef.receive(UpdateAlarmStatus(ARMED, user))
+        actorRef.receive(UpdateAlarmStatus(ARMED, "alarmPass", user))
       }
       expectNoMsg()
     }
@@ -75,7 +77,7 @@ with BeforeAndAfterEach {
       val alarmStatus = AlarmStatus()
       when(zoneStatusDao.getAllZonesStatus).thenReturn(List(zonesStatus))
       when(alarmStatusDao.getAlarmStatus).thenReturn(Some(alarmStatus))
-      actorRef ! UpdateAlarmStatus(ARMED, user)
+      actorRef ! UpdateAlarmStatus(ARMED, "alarmPass", user)
       alarmStatus.timeArmed shouldBe 1000L
       alarmStatus.userIdArmed shouldBe user.oid.get
       alarmStatus.status shouldBe ARMED
@@ -89,7 +91,7 @@ with BeforeAndAfterEach {
       val alarmStatus = AlarmStatus()
       when(zoneStatusDao.getAllZonesStatus).thenReturn(List(zonesStatus))
       when(alarmStatusDao.getAlarmStatus).thenReturn(Some(alarmStatus))
-      actorRef ! UpdateAlarmStatus(DISARMED, user)
+      actorRef ! UpdateAlarmStatus(DISARMED, "alarmPass", user)
       alarmStatus.timeDisArmed shouldBe 1000L
       alarmStatus.userIdDisarmed shouldBe user.oid.get
       alarmStatus.status shouldBe DISARMED
@@ -104,13 +106,13 @@ with BeforeAndAfterEach {
       when(alarmStatus.status).thenReturn(DISARMED)
       when(zoneStatusDao.getAllZonesStatus).thenReturn(List(zonesStatus))
       when(alarmStatusDao.getAlarmStatus).thenReturn(Some(alarmStatus))
-      actorRef ! UpdateAlarmStatus(DISARMED, user)
+      actorRef ! UpdateAlarmStatus(DISARMED, "alarmPass", user)
       verify(alarmStatusDao).update(alarmStatus)
       verify(alarmStatus).resetAlarmStatus()
       expectMsgAnyClassOf(classOf[AlarmStatusRs])
     }
     "get alarm status history" in {
-       val alarmStatus = AlarmStatus()
+      val alarmStatus = AlarmStatus()
       alarmStatus.status = ARMED
       alarmStatus.userIdArmed = user.oid.get
       when(alarmStatusHistoryDao.getAlarmStatuses(10, 0)).thenReturn(List(new AlarmStatusHistory(alarmStatus)))

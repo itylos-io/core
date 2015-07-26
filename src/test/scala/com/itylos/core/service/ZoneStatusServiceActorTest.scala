@@ -27,7 +27,7 @@ with BeforeAndAfterEach {
 
   // Common variables to all tests
   val zoneId = "fooZoneId"
-  val user = new User(Some("userOid"), "userName", "userEmail", List(), "webPass", "alarmPass")
+  val user = new User(Some("userOid"), "userName", "userEmail", "webPass", "alarmPass")
   val updatedZoneStatus = ZoneStatus(zoneId, ENABLED)
   val zoneData = Zone(Some(zoneId), "zName", "zDesc", List("sensorOid"), 15L)
 

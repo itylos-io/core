@@ -1,8 +1,8 @@
-#Itylos.io
-
-[![Join the chat at https://gitter.im/itylos-io/core](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/itylos-io/core?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+# Itylos.io
 
 [![Build Status](https://travis-ci.org/itylos-io/core.svg?branch=master)](https://travis-ci.org/itylos-io/core)
+[![Join the chat at https://gitter.im/itylos-io/core](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/itylos-io/core?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 
 ## Introduction
 

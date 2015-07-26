@@ -18,7 +18,7 @@ class SensorEventTest extends WordSpecLike with Matchers with BeforeAndAfterEach
   val oid = JField("oid", new JString("oid"))
   val sensorId = JField("sensorId", new JString("sensorId"))
   val batteryLevel = JField("batteryLevel", new JInt(85))
-  val sensorStatus = JField("status", new JString("open"))
+  val sensorStatus = JField("status", new JInt(1))
 
   "A SensorEvent" must {
     "throw exception when id is missing and it's required" in {
@@ -48,7 +48,7 @@ class SensorEventTest extends WordSpecLike with Matchers with BeforeAndAfterEach
       event.fromJObject(jObject, isIdRequired = true)
       event.oid shouldBe Some("oid")
       event.sensorId shouldBe "sensorId"
-      event.status shouldBe OPEN
+      event.status shouldBe 1
       event.batteryLevel shouldBe -1
       event.dateOfEvent shouldBe 1000L
     }
@@ -58,7 +58,7 @@ class SensorEventTest extends WordSpecLike with Matchers with BeforeAndAfterEach
       event.fromJObject(jObject, isIdRequired = true)
       event.oid shouldBe Some("oid")
       event.sensorId shouldBe "sensorId"
-      event.status shouldBe OPEN
+      event.status shouldBe 1
       event.batteryLevel shouldBe 85
       event.dateOfEvent shouldBe 1000L
     }

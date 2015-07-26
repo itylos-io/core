@@ -10,15 +10,17 @@ import org.json4s.JsonAST.JObject
 
 /**
  * Holds data for a sensor event
+ * status is either 0 when closed,movement stopped etc
+ * or 1 when open, movement detected etc..
  */
 case class SensorEvent(var oid: Option[String],
                        var sensorId: String,
-                       var status: SensorStatus,
+                       var status: Int, // 0 or 1
                        var batteryLevel: Int,
                        var dateOfEvent: Long) extends DaoObject with ParameterValidator {
 
   def this() {
-    this(None, "", OPEN, 100, 0L)
+    this(None, "", 1, 100, 0L)
   }
 
   /**
@@ -29,8 +31,8 @@ case class SensorEvent(var oid: Option[String],
   def fromJObject(data: JObject, isIdRequired: Boolean) {
     oid = getParameter(data, "oid", isIdRequired)
     sensorId = getParameter(data, "sensorId").get
-    batteryLevel = getParameter(data, "batteryLevel",false).getOrElse(-1).toString.toInt
-    status = SensorStatus.from(getParameter(data, "status").get)
+    batteryLevel = getParameter(data, "batteryLevel", false).getOrElse(-1).toString.toInt
+    status = getParameter(data, "status").get.toInt
     dateOfEvent = new DateTime().getMillis
   }
 
@@ -42,7 +44,7 @@ case class SensorEvent(var oid: Option[String],
     this(
       Some(obj.get("_id").toString),
       obj.getAs[String]("sensorId").get,
-      SensorStatus.from(obj.getAs[String]("status").get),
+      obj.getAs[Int]("status").get,
       obj.getAs[Int]("batteryLevel").get,
       obj.getAs[Long]("dateOfEvent").get
     )
@@ -55,7 +57,7 @@ case class SensorEvent(var oid: Option[String],
     val builder = MongoDBObject.newBuilder
     if (oid != None) builder += ("_id" -> oid)
     builder += ("sensorId" -> sensorId)
-    builder += ("status" -> status.toString)
+    builder += ("status" -> status)
     builder += ("batteryLevel" -> batteryLevel)
     builder += ("dateOfEvent" -> dateOfEvent)
     builder.result()

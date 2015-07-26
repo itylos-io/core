@@ -36,7 +36,7 @@ class UserServiceActor extends Actor with ActorLogging {
         val adminEmail = adminConfig.getString("email")
         val adminWebPass = adminConfig.getString("webPass")
         val adminAlarmPass = adminConfig.getString("alarmPass")
-        val adminUser = User(None, "admin", adminEmail, List(), adminWebPass, adminAlarmPass, isAdmin = true)
+        val adminUser = User(None, "admin", adminEmail,  adminWebPass, adminAlarmPass, isAdmin = true)
         userDao.save(adminUser)
       }
 

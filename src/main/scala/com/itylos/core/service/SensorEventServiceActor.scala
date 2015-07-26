@@ -27,6 +27,7 @@ object SensorEventServiceActor {
 class SensorEventServiceActor extends Actor with ActorLogging {
   this: SensorEventComponent with SensorComponent with SensorTypeComponent with NotificationsHelper =>
 
+  val MAX_SENSOR_EVENTS_TO_STORE_PER_SENSOR = 20
 
   def receive = {
 
@@ -41,6 +42,7 @@ class SensorEventServiceActor extends Actor with ActorLogging {
       if (!sensorType.get.isBatteryPowered) sensorEvent.batteryLevel = -1
       sensorEventDao.save(sensorEvent)
       sender ! GetSensorEventsRs(List())
+      removePastEvents(sensorEvent.sensorId)
       notifyAll(context, NewSensorEventNotification(sensorData.get, sensorEvent))
 
     // --- Get sensor events --- //
@@ -61,6 +63,18 @@ class SensorEventServiceActor extends Actor with ActorLogging {
       sensorEventDao.removeEventsForSensor(sensorId)
       val latestEvents = sensorEventDao.getSensorEvents(None, 5, 0)
       sender ! GetSensorEventsRs(convert2DTOs(latestEvents))
+
+  }
+
+  /**
+   * Removes events from sensor that have length > 100
+   */
+  private def removePastEvents(sensorId: String): Unit = {
+    val sensors = sensorEventDao.getSensorEvents(Some(sensorId), 1000, 0)
+    if (sensors.length > MAX_SENSOR_EVENTS_TO_STORE_PER_SENSOR) {
+      val toRemove = sensors.reverse.slice(MAX_SENSOR_EVENTS_TO_STORE_PER_SENSOR, sensors.length)
+      toRemove.foreach(tr => sensorEventDao.removeEventBySensorEventId(tr.oid.get))
+    }
 
   }
 

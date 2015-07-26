@@ -13,7 +13,6 @@ case class UserDto(
                     var email: String,
                     var webPassword: String,
                     var alarmPassword: String,
-                    var phones: List[String],
                     var dateRegistered: Long,
                     var dateRegisteredH: String,
                     var isAdmin: Boolean) {
@@ -29,7 +28,6 @@ case class UserDto(
       user.email,
       user.webPassword,
       user.alarmPassword,
-      user.phones,
       user.dateRegistered,
       new DateTime().withMillis(user.dateRegistered).withZone(DateTimeZone.UTC).toString,
       user.isAdmin

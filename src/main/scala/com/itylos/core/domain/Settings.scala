@@ -15,7 +15,8 @@ case class Settings(var oid: Option[String] = None,
                     var emailSettings: EmailSettings = new EmailSettings(),
                     var nexmoSettings: NexmoSettings = new NexmoSettings(),
                     var webHookSettings: WebHookSettings = new WebHookSettings(),
-                    var pushBulletSettings: PushBulletSettings = new PushBulletSettings())
+                    var pushBulletSettings: PushBulletSettings = new PushBulletSettings(),
+                    var kerberosSettings: KerberosSettings = new KerberosSettings())
   extends DaoObject with ParameterValidator {
 
   /**
@@ -28,17 +29,20 @@ case class Settings(var oid: Option[String] = None,
     val systemSettingsObject = new SystemSettings()
     val pushBulletSettingsObject = new PushBulletSettings()
     val webHookSettingsObject = new WebHookSettings()
+    val kerberosSettingsObject = new KerberosSettings()
     emailSettingsObject.fromMap(data.values.get("emailSettings").get.asInstanceOf[Map[String, AnyRef]])
     nexmoSettingsObject.fromMap(data.values.get("nexmoSettings").get.asInstanceOf[Map[String, AnyRef]])
     systemSettingsObject.fromMap(data.values.get("systemSettings").get.asInstanceOf[Map[String, AnyRef]])
     pushBulletSettingsObject.fromMap(data.values.get("pushBulletSettings").get.asInstanceOf[Map[String, AnyRef]])
     pushBulletSettingsObject.fromMap(data.values.get("pushBulletSettings").get.asInstanceOf[Map[String, AnyRef]])
     webHookSettingsObject.fromMap(data.values.get("webHookSettings").get.asInstanceOf[Map[String, AnyRef]])
+    kerberosSettingsObject.fromMap(data.values.get("kerberosSettings").get.asInstanceOf[Map[String, AnyRef]])
     emailSettings = emailSettingsObject
     nexmoSettings = nexmoSettingsObject
     systemSettings = systemSettingsObject
     pushBulletSettings = pushBulletSettingsObject
     webHookSettings = webHookSettingsObject
+    kerberosSettings = kerberosSettingsObject
   }
 
   /**
@@ -52,7 +56,8 @@ case class Settings(var oid: Option[String] = None,
       new EmailSettings(obj.getAs[DBObject]("emailSettings").get),
       new NexmoSettings(obj.getAs[DBObject]("nexmoSettings").get),
       new WebHookSettings(obj.getAs[DBObject]("webHookSettings").get),
-      new PushBulletSettings(obj.getAs[DBObject]("pushBulletSettings").get)
+      new PushBulletSettings(obj.getAs[DBObject]("pushBulletSettings").get),
+      new KerberosSettings(obj.getAs[DBObject]("kerberosSettings").get)
     )
   }
 
@@ -67,6 +72,7 @@ case class Settings(var oid: Option[String] = None,
     builder += ("nexmoSettings" -> nexmoSettings.asDbObject())
     builder += ("systemSettings" -> systemSettings.asDbObject())
     builder += ("pushBulletSettings" -> pushBulletSettings.asDbObject())
+    builder += ("kerberosSettings" -> kerberosSettings.asDbObject())
     builder += ("webHookSettings" -> webHookSettings.asDbObject())
     builder.result()
   }

@@ -2,7 +2,7 @@ package com.itylos.core.service
 
 import akka.actor.{Actor, ActorLogging, Props}
 import com.itylos.core.dao._
-import com.itylos.core.domain.PushBulletDevice
+import com.itylos.core.domain.{PushBulletDevice, Sensor, SensorEvent}
 import com.itylos.core.service.protocol._
 
 import scalaj.http.{Http, HttpOptions}
@@ -31,6 +31,7 @@ class PushBulletServiceActor extends Actor with ActorLogging {
   var NOTIFY_FOR_ALARM_STATUS_UPDATES = false
   var PUSH_BULLET_DEVICES: List[PushBulletDevice] = List()
   var NOTIFY_FOR_ALARMS = false
+  var NOTIFY_VIA_PUSHBULLET = false
 
   override def preStart() {
     log.info("Starting pushBullet notification service...")
@@ -41,15 +42,15 @@ class PushBulletServiceActor extends Actor with ActorLogging {
     // --- Notify for sensor event --- //
     case NewSensorEventNotification(sensor, sensorEvent) =>
       updateSettings()
-      if (NOTIFY_FOR_SENSOR_EVENTS) {
-        val message = sensor.name + " is now " + sensorEvent.status.toString.toLowerCase
+      if (NOTIFY_VIA_PUSHBULLET && NOTIFY_FOR_SENSOR_EVENTS) {
+        val message = createSensorEventMessage(sensorEvent, sensor)
         sendViaPushBullet(message)
       }
 
     // --- Notify for change in alarm status --- //
     case UpdatedAlarmStatusNotification(alarmStatus) =>
       updateSettings()
-      if (NOTIFY_FOR_ALARM_STATUS_UPDATES) {
+      if (NOTIFY_VIA_PUSHBULLET && NOTIFY_FOR_ALARM_STATUS_UPDATES) {
         val message = alarmStatus.user.get.name + " changed alarm status to " + alarmStatus.currentStatus.toLowerCase
         sendViaPushBullet(message)
       }
@@ -58,7 +59,7 @@ class PushBulletServiceActor extends Actor with ActorLogging {
     case AlarmTriggeredNotification() =>
       updateSettings()
       val alarmStatus = alarmStatusDao.getAlarmStatus.get
-      if (!alarmStatus.pushBulletNotificationsSent && NOTIFY_FOR_ALARMS) {
+      if (!alarmStatus.pushBulletNotificationsSent && NOTIFY_FOR_ALARMS && NOTIFY_VIA_PUSHBULLET) {
         alarmStatus.pushBulletNotificationsSent = true
         alarmStatusDao.update(alarmStatus)
         val message = "Alarm has been triggered !!!"
@@ -67,12 +68,31 @@ class PushBulletServiceActor extends Actor with ActorLogging {
 
   }
 
+  def createSensorEventMessage(sensorEvent: SensorEvent, sensor: Sensor): String = {
+    var message = ""
+    if (sensor.sensorTypeId == "1" || sensor.sensorTypeId == "2") {
+      if (sensorEvent.status == 1) {
+        message = sensor.name + " is now open"
+      } else {
+        message = sensor.name + " is now closed"
+      }
+    } else if (sensor.sensorTypeId == "3" || sensor.sensorTypeId == "4") {
+      if (sensorEvent.status == 1) {
+        message = "Movement detected in  " + sensor.name
+      } else {
+        message = "Movement stopped  in  " + sensor.name
+      }
+    }
+    message
+  }
+
   /**
    * Update the settings because they change on the fly
    */
   def updateSettings(): Unit = {
     val settings = settingsDao.getSettings.get.pushBulletSettings
     PUSH_BULLET_DEVICES_ENDPOINT = settings.pushBulletEndpoint
+    NOTIFY_VIA_PUSHBULLET = settings.isEnabled
     PUSH_BULLET_ACCESS_TOKEN = settings.accessToken
     NOTIFY_FOR_SENSOR_EVENTS = settings.notifyForSensorEvents
     NOTIFY_FOR_ALARM_STATUS_UPDATES = settings.notifyForAlarmsStatusUpdates

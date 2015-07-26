@@ -31,10 +31,10 @@ with WordSpecLike with Matchers with TestEnvironmentRepos with StopSystemAfterAl
   // Common variables to all tests
   val sensorId = "200"
   val sensorOId = "sensorOId"
-  val sensorEvent = new SensorEvent(None, sensorId, OPEN, 100, 1000L)
+  val sensorEvent = new SensorEvent(None, sensorId, 1, 100, 1000L)
   val sensor = Sensor(Some(sensorOId), sensorId, "sName", "sDesc", "sLoc", "1", isActive = true, 1000L)
   val pushbulletDevices = List(PushBulletDevice(isEnabled = true, "iden", "name"))
-  val user = User(None, "admin", "admin@myhome.com", List(), "123456", "123456", 1000, isAdmin = true)
+  val user = User(None, "admin", "admin@myhome.com", "123456", "123456", 1000, isAdmin = true)
   val alarmStatusDto = AlarmStatusDto("ENABLED", Some(new UserDto(user)))
   var settings = new Settings()
   val alarmStatus = new AlarmStatus()
@@ -66,10 +66,11 @@ with WordSpecLike with Matchers with TestEnvironmentRepos with StopSystemAfterAl
 
   }
 
-  override def afterAll(): Unit ={
+  override def afterAll(): Unit = {
     mockServer.stop()
   }
 
+  //TODO tests are missing
   "A PushBulletServiceActor" must {
     "not notify for alarm updates when notify for alarm updates is disabled" in {
       settings.pushBulletSettings.notifyForAlarmsStatusUpdates = false
@@ -80,19 +81,39 @@ with WordSpecLike with Matchers with TestEnvironmentRepos with StopSystemAfterAl
         , VerificationTimes.exactly(0)
       )
     }
+    "not notify for alarm updates when notify for alarm updates is enabled and pushbullet notifications are disabled" in {
+      settings.pushBulletSettings.notifyForAlarmsStatusUpdates = true
+      settings.pushBulletSettings.isEnabled = false
+      actorRef ! UpdatedAlarmStatusNotification(alarmStatusDto)
+      mockServer.verify(
+        request().withMethod("POST").withPath("/trigger")
+          .withBody("{\"device_iden\":\"iden\",\"type\":\"note\",\"title\":\"Itylos.io\",\"body\":\"admin changed alarm status to enabled\"}")
+        , VerificationTimes.exactly(0)
+      )
+    }
     "notify for alarm updates when notify for alarm updates is enabled" in {
       actorRef ! UpdatedAlarmStatusNotification(alarmStatusDto)
       mockServer.verify(
-        request().withMethod("POST").withPath("/trigger").withHeader( new Header("Authorization", "Bearer "+settings.pushBulletSettings.accessToken))
+        request().withMethod("POST").withPath("/trigger").withHeader(new Header("Authorization", "Bearer " + settings.pushBulletSettings.accessToken))
           .withBody("{\"device_iden\":\"iden\",\"type\":\"note\",\"title\":\"Itylos.io\",\"body\":\"admin changed alarm status to enabled\"}")
         , VerificationTimes.exactly(1)
+      )
+    }
+    "not notify for sensor events when sensor event notification is enabled and pushbullet notifications are disabled" in {
+      settings.pushBulletSettings.notifyForSensorEvents = false
+      settings.pushBulletSettings.isEnabled = false
+      actorRef ! NewSensorEventNotification(sensor, sensorEvent)
+      mockServer.verify(
+        request().withMethod("POST").withPath("/trigger").withHeader(new Header("Authorization", "Bearer " + settings.pushBulletSettings.accessToken))
+          .withBody("{\"device_iden\":\"iden\",\"type\":\"note\",\"title\":\"Itylos.io\",\"body\":\"sName is now open\"}")
+        , VerificationTimes.exactly(0)
       )
     }
     "not notify for sensor events when sensor event notification is disabled" in {
       settings.pushBulletSettings.notifyForSensorEvents = false
       actorRef ! NewSensorEventNotification(sensor, sensorEvent)
       mockServer.verify(
-        request().withMethod("POST").withPath("/trigger").withHeader( new Header("Authorization", "Bearer "+settings.pushBulletSettings.accessToken))
+        request().withMethod("POST").withPath("/trigger").withHeader(new Header("Authorization", "Bearer " + settings.pushBulletSettings.accessToken))
           .withBody("{\"device_iden\":\"iden\",\"type\":\"note\",\"title\":\"Itylos.io\",\"body\":\"sName is now open\"}")
         , VerificationTimes.exactly(0)
       )
@@ -101,7 +122,7 @@ with WordSpecLike with Matchers with TestEnvironmentRepos with StopSystemAfterAl
       settings.pushBulletSettings.notifyForSensorEvents = true
       actorRef ! NewSensorEventNotification(sensor, sensorEvent)
       mockServer.verify(
-        request().withMethod("POST").withPath("/trigger").withHeader( new Header("Authorization", "Bearer "+settings.pushBulletSettings.accessToken))
+        request().withMethod("POST").withPath("/trigger").withHeader(new Header("Authorization", "Bearer " + settings.pushBulletSettings.accessToken))
           .withBody("{\"device_iden\":\"iden\",\"type\":\"note\",\"title\":\"Itylos.io\",\"body\":\"sName is now open\"}")
         , VerificationTimes.exactly(1)
       )
@@ -110,7 +131,17 @@ with WordSpecLike with Matchers with TestEnvironmentRepos with StopSystemAfterAl
       settings.pushBulletSettings.notifyForAlarms = false
       actorRef ! AlarmTriggeredNotification()
       mockServer.verify(
-        request().withMethod("POST").withPath("/trigger").withHeader( new Header("Authorization", "Bearer "+settings.pushBulletSettings.accessToken))
+        request().withMethod("POST").withPath("/trigger").withHeader(new Header("Authorization", "Bearer " + settings.pushBulletSettings.accessToken))
+          .withBody("{\"device_iden\":\"iden\",\"type\":\"note\",\"title\":\"Itylos.io\",\"body\":\"Alarm has been triggered !!!\"}")
+        , VerificationTimes.exactly(0)
+      )
+    }
+    "not notify for alarm when alarm notification is enabled and pushbullet notifications are disabled" in {
+      settings.pushBulletSettings.notifyForAlarms = false
+      settings.pushBulletSettings.isEnabled = false
+      actorRef ! AlarmTriggeredNotification()
+      mockServer.verify(
+        request().withMethod("POST").withPath("/trigger").withHeader(new Header("Authorization", "Bearer " + settings.pushBulletSettings.accessToken))
           .withBody("{\"device_iden\":\"iden\",\"type\":\"note\",\"title\":\"Itylos.io\",\"body\":\"Alarm has been triggered !!!\"}")
         , VerificationTimes.exactly(0)
       )
@@ -118,7 +149,7 @@ with WordSpecLike with Matchers with TestEnvironmentRepos with StopSystemAfterAl
     "notify for alarm when alarm notification is enabled" in {
       actorRef ! AlarmTriggeredNotification()
       mockServer.verify(
-        request().withMethod("POST").withPath("/trigger").withHeader( new Header("Authorization", "Bearer "+settings.pushBulletSettings.accessToken))
+        request().withMethod("POST").withPath("/trigger").withHeader(new Header("Authorization", "Bearer " + settings.pushBulletSettings.accessToken))
           .withBody("{\"device_iden\":\"iden\",\"type\":\"note\",\"title\":\"Itylos.io\",\"body\":\"Alarm has been triggered !!!\"}")
         , VerificationTimes.exactly(1)
       )

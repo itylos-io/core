@@ -2,7 +2,7 @@ package com.itylos.core.service
 
 import akka.actor.{Actor, ActorLogging, Props}
 import com.itylos.core.dao.SettingsComponent
-import com.itylos.core.domain.{PushBulletDevice, Settings}
+import com.itylos.core.domain.{KerberosInstance, PushBulletDevice, Settings}
 import com.itylos.core.rest.dto.SettingsDto
 import com.itylos.core.service.protocol._
 
@@ -33,7 +33,7 @@ class SettingsServiceActor extends Actor with ActorLogging {
         settings = Some(Settings())
         settingsDao.save(settings.get)
       }
-      sender() ! GetSystemSettingsRs( new SettingsDto(settings.get))
+      sender() ! GetSystemSettingsRs(new SettingsDto(settings.get))
 
     // --- Update nexmo settings --- //
     case UpdateNexmoSettingsRq(nexmoSettings) =>
@@ -67,6 +67,15 @@ class SettingsServiceActor extends Actor with ActorLogging {
       settingsDao.save(settings)
       sender() ! GetSystemSettingsRs(getSettingsAsDto)
 
+    // --- Update KerberosSettings --- //
+    case UpdateKerberosSettingsRq(kerberosSettings) =>
+      val settings = settingsDao.getSettings.get
+      settingsDao.deleteSettings()
+      settings.kerberosSettings = kerberosSettings
+      settingsDao.save(settings)
+      context.actorOf(SensorServiceActor.props()) ! UpdateKerberosSensors(settingsDao.getSettings.get.kerberosSettings.kerberosInstances)
+      sender() ! GetSystemSettingsRs(getSettingsAsDto)
+
     // --- Update WebHookSettings --- //
     case UpdateWebHookSettingsRq(webHookSettings) =>
       val settings = settingsDao.getSettings.get
@@ -83,6 +92,12 @@ class SettingsServiceActor extends Actor with ActorLogging {
     case GetPushBulletDevicesRq(accessToken) =>
       val activeDevices = getPushBulletDevices(accessToken)
       sender() ! GetPushBulletDevicesRs(activeDevices)
+
+    // --- Get instance name from a kerberos instance --- //
+    case GetKerberosInstanceRq(ip, username, password) =>
+      val kerberosInstance = new KerberosInstance("instanceName", "ip", "username", "password")
+      sender() ! GetKerberosInstanceRs(kerberosInstance)
+
   }
 
 

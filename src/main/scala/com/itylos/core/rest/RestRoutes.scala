@@ -6,6 +6,7 @@ import com.itylos.core.dao.SensorComponent
 import com.itylos.core.domain._
 import com.itylos.core.exception.AlarmStatusEnum
 import com.itylos.core.rest.authenticators.{AccessTokenAuthenticator, BasicAuthenticator, TokenAuthenticator}
+import com.itylos.core.rest.dto.WeatherConditionsDto
 import com.itylos.core.service._
 import com.itylos.core.service.protocol._
 import org.json4s.DefaultFormats
@@ -29,6 +30,29 @@ with AccessTokenAuthenticator with CORSSupport with SensorComponent {
   implicit def json4sFormats = DefaultFormats
 
   implicit val timeout = Timeout(10 seconds)
+
+
+  val weatherConditionRoutes =
+    cors {
+      pathPrefix("api" / "v1") {
+        authenticate(sensorTokenAuthenticator) { user =>
+          path("weather_conditions") {
+            entity(as[JObject]) { data =>
+              val weatherConditions = WeatherConditionsDto(
+                data.values("location").toString,
+                data.values("temperature").toString.toDouble,
+                data.values("temperatureSymbol").toString,
+                data.values("humidity").toString.toDouble,
+                data.values("humiditySymbol").toString
+              )
+              actorRefFactory.actorSelection("/user/webSocketActor") ! Event(UpdatedWeatherConditionsNotification(weatherConditions))
+              complete("ok")
+            }
+          }
+        }
+      }
+    }
+
 
   /* Routes for users management */
   val userRoutes =
@@ -81,7 +105,6 @@ with AccessTokenAuthenticator with CORSSupport with SensorComponent {
             } ~ delete {
               // --- Delete user user --- //
               entity(as[JObject]) { data =>
-                // TODO delete user's history
                 val userId = getParameter(data, "oid").get
                 handleUsersApiRequest(DeleteUserRq(userId))
               }
@@ -123,13 +146,12 @@ with AccessTokenAuthenticator with CORSSupport with SensorComponent {
           } ~ put {
             // --- Update alarm status --- //
             entity(as[JObject]) { data =>
-              // TODO check 4 digit password
               val status = AlarmStatusEnum.from(getParameter(data, "status").get)
-              handleAlarmsApiRequest(UpdateAlarmStatus(status, user))
+              val password = getParameter(data, "password", isRequired = false).getOrElse("")
+              handleKerberosApiRequest(UpdateKerberosInstances(status))
+              handleAlarmsApiRequest(UpdateAlarmStatus(status, password, user))
             }
           }
-
-
         }
       }
     }
@@ -196,6 +218,22 @@ with AccessTokenAuthenticator with CORSSupport with SensorComponent {
               }
             }
           } ~
+          // --- Update kerberos settings --- //
+          path("api" / "v1" / "settings" / "kerberos") {
+            put {
+              entity(as[JObject]) { data =>
+                val kerberosSettings = new KerberosSettings()
+                kerberosSettings.fromJObject(data)
+                handleSettingsApiRequest(UpdateKerberosSettingsRq(kerberosSettings))
+              }
+            }
+          } ~
+          // --- Get kerberos instance name --- //
+          path("api" / "v1" / "settings" / "kerberos" / "instance_name" / Segment / Segment / Segment) { (ip, username, password) =>
+            get {
+              handleSettingsApiRequest(GetKerberosInstanceRq(ip, username, password))
+            }
+          } ~
           // --- Get push bullet devices --- //
           path("api" / "v1" / "settings" / "pushbullet" / "devices" / Segment) { accessToken =>
             get {
@@ -251,6 +289,15 @@ with AccessTokenAuthenticator with CORSSupport with SensorComponent {
             // --- Get zones --- //
             handleZonesApiRequest(GetZonesRq(user))
           }
+        }
+      }
+    }
+
+  val itylosEventsRoutes =
+    cors {
+      pathPrefix("api" / "v1" / "kerberos" / "callback") {
+        post {
+          complete("ok")
         }
       }
     }
@@ -324,8 +371,7 @@ with AccessTokenAuthenticator with CORSSupport with SensorComponent {
             entity(as[JObject]) { data =>
               val sensorOId = getParameter(data, "oid").get
               sensorDao.checkSensorsExistenceByOid(List(sensorOId))
-              val sensorId = sensorDao.getSensorByObjectId(sensorOId).get.sensorId
-              actorRefFactory.actorOf(SensorEventServiceActor.props()) ! RemoveSensorEventsForSensor(sensorId)
+              actorRefFactory.actorOf(SensorEventServiceActor.props()) ! RemoveSensorEventsForSensor(sensorOId)
               actorRefFactory.actorOf(ZoneServiceActor.props()) ! RemoveSensorFromZone(sensorOId)
               handleSensorApiRequest(DeleteSensorRq(sensorOId))
             }
@@ -367,5 +413,7 @@ with AccessTokenAuthenticator with CORSSupport with SensorComponent {
   def handleSettingsApiRequest(message: SettingsProtocol): Route =
     ctx => perRequest(actorRefFactory, ctx, SettingsServiceActor.props(), message)
 
+  def handleKerberosApiRequest(message: KerberosManagementProtocol): Route =
+    ctx => perRequest(actorRefFactory, ctx, KerberosManagementActor.props(), message)
 
 }

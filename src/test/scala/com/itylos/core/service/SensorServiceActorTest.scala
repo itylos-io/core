@@ -28,7 +28,7 @@ with BeforeAndAfterEach {
   // Common variables to all tests
   val sensorOid = "sensorOId"
   val sensorId = "sensorId"
-  val user = new User(Some("userOid"), "userName", "userEmail", List(), "webPass", "alarmPass")
+  val user = new User(Some("userOid"), "userName", "userEmail",  "webPass", "alarmPass")
   val sensor = Sensor(Some(sensorOid), sensorId, "sName", "sDesc", "sLoc", "1", isActive = true, 1000L)
   val sensorType = SensorType("1", "name", "description", isBatteryPowered = true)
 

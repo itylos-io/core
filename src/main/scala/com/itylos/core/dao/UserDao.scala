@@ -72,7 +72,6 @@ trait UserDaoComponent {
       val update = $set(
         "name" -> user.name,
         "email" -> user.email,
-        "phones" -> user.phones,
         "webPassword" -> user.webPassword,
         "alarmPassword" -> user.alarmPassword,
         "isAdmin" -> user.isAdmin,

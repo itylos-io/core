@@ -31,7 +31,7 @@ with WordSpecLike with Matchers with TestEnvironmentRepos with StopSystemAfterAl
   // Common variables to all tests
   val sensorId = "200"
   val sensorOId = "sensorOId"
-  val sensorEvent = new SensorEvent(None, sensorId, OPEN, 100, 1000L)
+  val sensorEvent = new SensorEvent(None, sensorId, 1, 100, 1000L)
   val sensor = Sensor(Some(sensorOId), sensorId, "sName", "sDesc", "sLoc", "1", isActive = true, 1000L)
 
   var settings = new Settings()
@@ -78,7 +78,8 @@ with WordSpecLike with Matchers with TestEnvironmentRepos with StopSystemAfterAl
           "\"sensorId\":\"200\"," +
           "\"sensorName\":\"sName\"," +
           "\"sensorLocation\":\"sLoc\"," +
-          "\"status\":\"OPEN\"," +
+          "\"sensorTypeId\":\"1\"," +
+          "\"status\":1," +
           "\"batteryLevel\":100," +
           "\"dateOfEvent\":1000," +
           "\"dateOfEventH\":\"1970-01-01T00:00:01.000Z\"" +

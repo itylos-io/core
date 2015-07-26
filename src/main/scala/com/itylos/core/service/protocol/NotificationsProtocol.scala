@@ -1,7 +1,7 @@
 package com.itylos.core.service.protocol
 
 import com.itylos.core.domain.{Sensor, SensorEvent}
-import com.itylos.core.rest.dto.AlarmStatusDto
+import com.itylos.core.rest.dto.{WeatherConditionsDto, AlarmStatusDto}
 
 
 /**
@@ -23,3 +23,8 @@ case class UpdatedAlarmStatusNotification(alarmStatus: AlarmStatusDto) extends N
  * Message to notify for triggered alarm
  */
 case class AlarmTriggeredNotification() extends NotificationsProtocol
+
+/**
+ * Message to notify for changes in weather conditions
+ */
+case class UpdatedWeatherConditionsNotification(weatherConditions: WeatherConditionsDto) extends NotificationsProtocol

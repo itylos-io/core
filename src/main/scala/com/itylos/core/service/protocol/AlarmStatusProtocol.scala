@@ -18,9 +18,10 @@ case class SetupAlarmStatus() extends AlarmStatusProtocol
 /**
  * Message to change the status of the alarm
  * @param status the new status
+ *             @param password the entered password
  * @param user the user performing the action
  */
-case class UpdateAlarmStatus(status: AlarmStatusEnum, user: User) extends AlarmStatusProtocol
+case class UpdateAlarmStatus(status: AlarmStatusEnum, password:String,user: User) extends AlarmStatusProtocol
 
 /**
  * Message that indicates a new sensor event has occurred

@@ -1,7 +1,7 @@
 package com.itylos.core.domain
 
 
-case class PushBulletDevice(var isEnabled: Boolean,
-                            var iden: String,
-                            var deviceName: String) {
+case class PushBulletDevice(isEnabled: Boolean,
+                            iden: String,
+                            deviceName: String) {
 }

@@ -25,7 +25,7 @@ with BeforeAndAfterEach {
   val zoneId = "zoneId"
   val sensorOid = "sensorOId"
   val sensorOIds = List(sensorOid)
-  val user = new User(Some("userOid"), "userName", "userEmail", List(), "webPass", "alarmPass")
+  val user = new User(Some("userOid"), "userName", "userEmail", "webPass", "alarmPass")
   var zone = Zone(Some(zoneId), "zName", "zDesc", sensorOIds, 15L)
 
   // Setup expected responses

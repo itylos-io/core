@@ -22,7 +22,7 @@ case class GetSensorEventsRq(sensorId:Option[String],limit:Int,offset:Int) exten
 /**
  * List sensor events
  */
-case class GetSensorEventsRs(sensorEvents:List[SensorEventDto]) extends SensorEventProtocol
+case class GetSensorEventsRs(sensorsStatus:List[SensorEventDto]) extends SensorEventProtocol
 
 /**
  * List latest sensor event for each sensor

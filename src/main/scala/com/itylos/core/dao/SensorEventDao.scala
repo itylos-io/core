@@ -3,6 +3,8 @@ package com.itylos.core.dao
 import com.itylos.core.domain.SensorEvent
 import com.mongodb.DBObject
 import com.mongodb.casbah.commons.MongoDBObject
+import com.mongodb.casbah.commons.ValidBSONType.ObjectId
+import org.bson.types.ObjectId
 
 /**
  * Dao for SensorEvent
@@ -46,10 +48,19 @@ trait SensorEventComponent {
      * Remove events for a sensor
      * @param sensorId the id of the sensor to remove events for
      */
-    def removeEventsForSensor(sensorId:String): Unit ={
-      val q: DBObject =  MongoDBObject("sensorId" -> sensorId)
-      val data =  db(getCollectionName).find(q)
-       if (data.nonEmpty) data.foreach(d=>db(getCollectionName).remove(d))
+    def removeEventsForSensor(sensorId: String): Unit = {
+      val q: DBObject = MongoDBObject("sensorId" -> sensorId)
+      val data = db(getCollectionName).find(q)
+      if (data.nonEmpty) data.foreach(d => db(getCollectionName).remove(d))
+    }
+
+    /**
+     * Remove a sensor event by sensor event id
+     * @param sensorEventId the id of the sensor event to delete
+     */
+    def removeEventBySensorEventId(sensorEventId: String): Unit = {
+      val q: DBObject = MongoDBObject("_id" -> new ObjectId(sensorEventId))
+      db(getCollectionName).remove(q)
     }
 
   }

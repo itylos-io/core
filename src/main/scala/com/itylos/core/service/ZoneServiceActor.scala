@@ -31,23 +31,24 @@ class ZoneServiceActor extends Actor with ActorLogging {
   def receive = {
 
     // --- Create zone --- //
-    case CreateZoneRq(user,zone) =>
+    case CreateZoneRq(user, zone) =>
       sensorDao.checkSensorsExistenceByOid(zone.sensorOIds)
       zoneDao.save(zone)
+      val zoneId = zoneDao.getAllZones.sortWith(_.dateCreated > _.dateCreated).head.oid.get
       // Create the corresponding zone status
-      val zoneStatus = ZoneStatus(zone.oid.get,ENABLED,zone.dateCreated)
+      val zoneStatus = ZoneStatus(zoneId, ENABLED, zone.dateCreated)
       zoneStatusDao.save(zoneStatus)
       sender() ! GetZonesRs(convert2DTOs(zoneDao.getAllZones))
 
     // --- Update zone --- //
-    case UpdateZoneRq(user,zone) =>
+    case UpdateZoneRq(user, zone) =>
       sensorDao.checkSensorsExistenceByOid(zone.sensorOIds)
       zoneDao.checkZonesExistence(List(zone.oid.get))
       zoneDao.update(zone)
       sender() ! GetZonesRs(convert2DTOs(zoneDao.getAllZones))
 
     // --- Delete zone --- //
-    case DeleteZoneRq(user,oid) =>
+    case DeleteZoneRq(user, oid) =>
       zoneStatusDao.deleteZoneStatusByZoneId(oid)
       zoneDao.deleteZoneByObjectId(oid)
       sender() ! GetZonesRs(convert2DTOs(zoneDao.getAllZones))
@@ -83,7 +84,7 @@ class ZoneServiceActor extends Actor with ActorLogging {
       }
       // Get the status for the zone
       val zoneStatus = zoneStatusDao.getZoneStatusByZoneId(zone.oid.get).get
-      new ZoneDto(zone,zoneStatus, Some(sensors))
+      new ZoneDto(zone, zoneStatus, Some(sensors))
     }
   }
 

@@ -23,7 +23,6 @@ trait ZoneStatusComponent {
       val query = MongoDBObject("zoneId" -> zoneStatus.zoneId)
       val update = $set(
         "status" -> zoneStatus.status.toString,
-        "status" -> zoneStatus.status.toString,
         "dateUpdated" -> new DateTime().getMillis
       )
       db(getCollectionName).update(query, update, upsert = true)

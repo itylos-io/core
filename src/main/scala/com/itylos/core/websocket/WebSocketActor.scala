@@ -3,7 +3,7 @@ package com.itylos.core.websocket
 import akka.actor._
 import com.itylos.core.rest.dto.{SensorEventDto, SystemOSStatsDto}
 import com.itylos.core.service.protocol._
-import com.itylos.core.websocket.ItylosNotificationEvents.{AlarmTriggeredMessage, NewSensorEventMessage, SystemStatsMessage, UpdatedAlarmStatusMessage}
+import com.itylos.core.websocket.ItylosNotificationEvents._
 import org.java_websocket.WebSocket
 
 import scala.collection._
@@ -49,6 +49,10 @@ class WebSocketActor() extends Actor with ActorLogging {
         // Updated system stats
         case systemStats: SystemOSStatsDto =>
           val msg = SystemStatsMessage(message = systemStats)
+          clients.foreach(ws => ws.send(msg.toJson.toString()))
+        // Updated weather conditions
+        case weatherConditions: UpdatedWeatherConditionsNotification =>
+          val msg = UpdatedWeatherConditionsMessage(message = weatherConditions.weatherConditions)
           clients.foreach(ws => ws.send(msg.toJson.toString()))
       }
 

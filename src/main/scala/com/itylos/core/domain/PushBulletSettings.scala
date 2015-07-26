@@ -65,13 +65,16 @@ case class PushBulletSettings(var isEnabled: Boolean = false,
       obj.getAsOrElse[String]("pushBulletEndpoint", "pushBulletEndpoint")
     )
 
-    devices = for (device <- obj.getAsOrElse[List[BasicDBObject]]("devices", List())) yield {
+    val foo = for (device <- obj.getAsOrElse[List[BasicDBObject]]("devices", List())) yield {
       new PushBulletDevice(
         device.getAsOrElse[Boolean]("isEnabled", false),
         device.getAsOrElse[String]("iden", "iden"),
         device.getAsOrElse[String]("deviceName", "nickname")
       )
     }
+
+    devices = foo.asInstanceOf[List[PushBulletDevice]]
+
   }
 
   /**
@@ -84,7 +87,18 @@ case class PushBulletSettings(var isEnabled: Boolean = false,
     builder += ("notifyForAlarms" -> notifyForAlarms)
     builder += ("notifyForAlarmsStatusUpdates" -> notifyForAlarmsStatusUpdates)
     builder += ("accessToken" -> accessToken)
-    builder += ("devices" -> devices)
+
+
+    try {
+      // HACK TODO FIX THIS! TODO
+      val foo = for (device <- devices) yield {
+        Map("deviceName" -> device.deviceName, "iden" -> device.iden, "isEnabled" -> device.isEnabled)
+      }
+      builder += ("devices" -> foo)
+    } catch {
+      case e: Exception => builder += ("devices" -> devices)
+    }
+
     builder += ("pushBulletEndpoint" -> pushBulletEndpoint)
     builder.result()
   }

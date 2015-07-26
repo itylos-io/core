@@ -22,7 +22,7 @@ with WordSpecLike with Matchers with TestEnvironmentRepos with StopSystemAfterAl
   val actorRef = TestActorRef(Props(new TokenServiceActor() with TestEnvironmentRepos {}))
 
   // Common variables to all tests
-  val user = new User(Some("userOid"), "userName", "userEmail", List(), "webPass", "alarmPass")
+  val user = new User(Some("userOid"), "userName", "userEmail",  "webPass", "alarmPass")
 
   val tokenStr = "tokenStr"
   val tokenData = Token("userOid", "tokenStr", 1000L)

@@ -18,7 +18,7 @@ abstract class CommonDao[T](val db: com.mongodb.casbah.MongoDB = MongoFactory.mo
    * Save document to collection
    * @param doc the document to persist
    */
-  def save(doc: DaoObject) {
+  def save(doc: DaoObject):AnyRef= {
     db(getCollectionName).insert(doc.asDbObject())
   }
 

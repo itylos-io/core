@@ -40,6 +40,11 @@ case class UpdatePushBulletSettingsRq(pushBulletSettings: PushBulletSettings) ex
 case class UpdateWebHookSettingsRq(webHookSettings: WebHookSettings) extends SettingsProtocol
 
 /**
+ * Message to update KerberosSettings
+ */
+case class UpdateKerberosSettingsRq(kerberosSettings: KerberosSettings) extends SettingsProtocol
+
+/**
  * Message to get SystemSettings
  */
 case class GetSystemSettingsRq() extends SettingsProtocol
@@ -48,6 +53,11 @@ case class GetSystemSettingsRq() extends SettingsProtocol
  * Message to request PushBullet for the user's devices
  */
 case class GetPushBulletDevicesRq(accessToken: String) extends SettingsProtocol
+
+/**
+ * Message to request a kerberos instance for it's configured name
+ */
+case class GetKerberosInstanceRq(ip: String,username:String,password:String) extends SettingsProtocol
 
 /**
  * Response message to GetSystemSettingsRq
@@ -59,3 +69,7 @@ case class GetSystemSettingsRs(settings: SettingsDto) extends SettingsProtocol
  */
 case class GetPushBulletDevicesRs(devices: List[PushBulletDevice]) extends SettingsProtocol
 
+/**
+ * Response message to GetKerberosInstanceRq
+ */
+case class GetKerberosInstanceRs(instance: KerberosInstance) extends SettingsProtocol
