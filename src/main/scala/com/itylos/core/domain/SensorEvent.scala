@@ -17,10 +17,11 @@ case class SensorEvent(var oid: Option[String],
                        var sensorId: String,
                        var status: Int, // 0 or 1
                        var batteryLevel: Int,
+                       var kerberosEventId: Option[String], //
                        var dateOfEvent: Long) extends DaoObject with ParameterValidator {
 
   def this() {
-    this(None, "", 1, 100, 0L)
+    this(None, "", 1, 100, None, 0L)
   }
 
   /**
@@ -31,8 +32,9 @@ case class SensorEvent(var oid: Option[String],
   def fromJObject(data: JObject, isIdRequired: Boolean) {
     oid = getParameter(data, "oid", isIdRequired)
     sensorId = getParameter(data, "sensorId").get
-    batteryLevel = getParameter(data, "batteryLevel", false).getOrElse(-1).toString.toInt
+    batteryLevel = getParameter(data, "batteryLevel", isRequired = false).getOrElse(-1).toString.toInt
     status = getParameter(data, "status").get.toInt
+    kerberosEventId = getParameter(data, "kerberosEventId", isRequired = false)
     dateOfEvent = new DateTime().getMillis
   }
 
@@ -46,6 +48,7 @@ case class SensorEvent(var oid: Option[String],
       obj.getAs[String]("sensorId").get,
       obj.getAs[Int]("status").get,
       obj.getAs[Int]("batteryLevel").get,
+      obj.getAs[String]("kerberosEventId"),
       obj.getAs[Long]("dateOfEvent").get
     )
   }
@@ -59,6 +62,7 @@ case class SensorEvent(var oid: Option[String],
     builder += ("sensorId" -> sensorId)
     builder += ("status" -> status)
     builder += ("batteryLevel" -> batteryLevel)
+    if (kerberosEventId != None) builder += ("kerberosEventId" -> kerberosEventId.get)
     builder += ("dateOfEvent" -> dateOfEvent)
     builder.result()
   }

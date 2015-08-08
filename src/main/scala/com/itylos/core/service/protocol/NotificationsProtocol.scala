@@ -12,7 +12,7 @@ sealed trait NotificationsProtocol extends Protocol
 /**
  * Message to notify for new sensor event
  */
-case class NewSensorEventNotification(sensor: Sensor, sensorEvent: SensorEvent) extends NotificationsProtocol
+case class NewSensorEventNotification(sensor: Sensor, sensorEvent: SensorEvent,kerberosImages:Option[List[String]]=None) extends NotificationsProtocol
 
 /**
  * Message to notify for changes in alarm status

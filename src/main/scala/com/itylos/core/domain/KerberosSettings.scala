@@ -12,8 +12,10 @@ import org.json4s.JsonAST.JObject
  */
 case class KerberosSettings(var isEnabled: Boolean = false,
                             var kerberosInstances: List[KerberosInstance],
-                            kerberosConditionUpdateEnpoint: String = "/api/v1/condition",
-                            kerberosInstanceNameEnpoint: String = "/api/v1/instance_name"
+                            kerberosConditionUpdateEndpoint: String = "/api/v1/condition/enabled",
+                            kerberosInstanceNameEndpoint: String = "/api/v1/name",
+                            kerberosInstanceIoDevicesEndpoint: String = "/api/v1/io",
+                            kerberosInstanceWebhookEndpoint: String = "/api/v1/io/webhook"
                              ) extends DaoObject with ParameterValidator {
 
   def this() {
@@ -41,7 +43,11 @@ case class KerberosSettings(var isEnabled: Boolean = false,
   def this(obj: DBObject) {
     this(
       obj.getAsOrElse[Boolean]("isEnabled", false),
-      List()
+      List(),
+      obj.getAsOrElse[String]("kerberosConditionUpdateEndpoint", "/api/v1/condition/enabled"),
+      obj.getAsOrElse[String]("kerberosInstanceNameEndpoint", "/api/v1/name"),
+      obj.getAsOrElse[String]("kerberosInstanceIoDevicesEndpoint", "/api/v1/io"),
+      obj.getAsOrElse[String]("kerberosInstanceWebhookEndpoint", "/api/v1/io/webhook")
     )
 
     kerberosInstances = for (device <- obj.getAsOrElse[List[BasicDBObject]]("kerberosInstances", List())) yield {
@@ -62,8 +68,10 @@ case class KerberosSettings(var isEnabled: Boolean = false,
     val builder = MongoDBObject.newBuilder
     builder += ("isEnabled" -> isEnabled)
     builder += ("kerberosInstances" -> kerberosInstances)
-    builder += ("kerberosConditionUpdateEnpoint" -> kerberosConditionUpdateEnpoint)
-    builder += ("kerberosInstanceNameEnpoint" -> kerberosInstanceNameEnpoint)
+    builder += ("kerberosConditionUpdateEndpoint" -> kerberosConditionUpdateEndpoint)
+    builder += ("kerberosInstanceNameEndpoint" -> kerberosInstanceNameEndpoint)
+    builder += ("kerberosInstanceIoDevicesEndpoint" -> kerberosInstanceIoDevicesEndpoint)
+    builder += ("kerberosInstanceWebhookEndpoint" -> kerberosInstanceWebhookEndpoint)
 
 
     try {

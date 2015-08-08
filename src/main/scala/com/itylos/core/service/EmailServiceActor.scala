@@ -65,7 +65,7 @@ class EmailServiceActor extends Actor with ActorLogging {
     emailSettings.emailsToNotify.foreach(email => {
       mailer(Envelope.from("admin" `@` "itylos.com")
         .to(email.split("@")(0) `@` email.split("@")(1))
-        .subject("Itulos Alert @ " + new DateTime().withMillis(alarmStatus.violationTime)
+        .subject("Itylos Alert @ " + new DateTime().withMillis(alarmStatus.violationTime)
         .withZone(DateTimeZone.UTC).toString)
         .content(Multipart().html(htmlData))).onSuccess {
         case _ => log.info("Emails delivered to " + email)

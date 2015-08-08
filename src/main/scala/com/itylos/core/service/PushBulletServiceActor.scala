@@ -40,7 +40,7 @@ class PushBulletServiceActor extends Actor with ActorLogging {
   def receive = {
 
     // --- Notify for sensor event --- //
-    case NewSensorEventNotification(sensor, sensorEvent) =>
+    case NewSensorEventNotification(sensor, sensorEvent,kerberosImages) =>
       updateSettings()
       if (NOTIFY_VIA_PUSHBULLET && NOTIFY_FOR_SENSOR_EVENTS) {
         val message = createSensorEventMessage(sensorEvent, sensor)

@@ -31,7 +31,7 @@ with WordSpecLike with Matchers with TestEnvironmentRepos with StopSystemAfterAl
   // Common variables to all tests
   val sensorId = "200"
   val sensorOId = "sensorOId"
-  val sensorEvent = new SensorEvent(None, sensorId, 1, 100, 1000L)
+  val sensorEvent = new SensorEvent(None, sensorId, 1, 100, None,1000L)
   val sensor = Sensor(Some(sensorOId), sensorId, "sName", "sDesc", "sLoc", "1", isActive = true, 1000L)
   val pushbulletDevices = List(PushBulletDevice(isEnabled = true, "iden", "name"))
   val user = User(None, "admin", "admin@myhome.com", "123456", "123456", 1000, isAdmin = true)

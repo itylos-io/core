@@ -13,6 +13,7 @@ case class SensorEventDto(var oid: String,
                           var sensorTypeId: String,
                           var status: Int,
                           var batteryLevel: Int,
+                          var kerberosEventImages: Option[List[String]],
                           var dateOfEvent: Long,
                           var dateOfEventH: String) {
 
@@ -20,8 +21,9 @@ case class SensorEventDto(var oid: String,
    * Constructor with a SensorEvent and a Sensor
    * @param sensorEvent the SensorEvent to get data from
    * @param sensor the Sensor to get data from
+   * @param kerberosEventImages imageUrls associated to kerberos event
    */
-  def this(sensorEvent: SensorEvent, sensor: Sensor) {
+  def this(sensorEvent: SensorEvent, sensor: Sensor, kerberosEventImages: Option[List[String]]=None) {
     this(
       if (sensorEvent.oid == None) "" else sensorEvent.oid.get,
       sensorEvent.sensorId,
@@ -30,6 +32,7 @@ case class SensorEventDto(var oid: String,
       sensor.sensorTypeId,
       sensorEvent.status,
       sensorEvent.batteryLevel,
+      kerberosEventImages,
       sensorEvent.dateOfEvent,
       new DateTime().withMillis(sensorEvent.dateOfEvent).withZone(DateTimeZone.UTC).toString
     )

@@ -27,7 +27,7 @@ object ItylosEventsJsonProtocol extends DefaultJsonProtocol {
   implicit val alarmTriggeredMessageFormat = jsonFormat1(AlarmTriggeredMessage)
   implicit val alarmStatusDtoFormat = jsonFormat2(AlarmStatusDto)
   implicit val alarmStatusUpdateEventFormat = jsonFormat2(UpdatedAlarmStatusMessage)
-  implicit val sensorEventDtoFormat = jsonFormat9(SensorEventDto)
+  implicit val sensorEventDtoFormat = jsonFormat10(SensorEventDto)
   implicit val newSensorEventMessageFormat = jsonFormat2(NewSensorEventMessage)
   implicit val systemOSStatsFormat = jsonFormat7(SystemOSStatsDto)
   implicit val systemStatsMessageFormat = jsonFormat2(SystemStatsMessage)

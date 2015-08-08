@@ -10,7 +10,7 @@ with RestRoutes {
   def actorRefFactory = context
 
   def receive = runRoute(handleRejections(customRejectionHandler)
-    (handleExceptions(customExceptionHandler)(userRoutes ~ sensorEventsRoutes ~ sensorRoutes ~ zoneRoutes
-      ~ settingsRoutes ~ alarmRoutes ~ weatherConditionRoutes)))
+    (handleExceptions(customExceptionHandler)(userRoutes~ kerberosEventsRoutes ~ sensorEventsRoutes ~ sensorRoutes ~ zoneRoutes
+      ~ settingsRoutes ~ alarmRoutes ~ weatherConditionRoutes )))
 
 }

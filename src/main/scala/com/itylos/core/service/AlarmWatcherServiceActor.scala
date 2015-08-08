@@ -36,21 +36,21 @@ class AlarmWatcherServiceActor extends Actor with ActorLogging {
   override def preStart() {
     import scala.concurrent.duration._
     context.system.scheduler.schedule(1.seconds, 3.seconds, self, CheckEnabledAlarms())
-
-    SECONDS_COMPLETELY_ARM = settingsDao.getSettings.get.systemSettings.delayToArm*1000
-    ENABLED_ALARM_TIMEOUT = settingsDao.getSettings.get.systemSettings.maxSecondsToDisarm * 1000
-    ENABLED_ALARM_MAX_RETRIES = settingsDao.getSettings.get.systemSettings.maxAlarmPasswordRetries
-    log.info("Starting alarm watcher...  " + ENABLED_ALARM_MAX_RETRIES)
+    reloadSettings()
+    log.info("Starting alarm watcher service...")
   }
 
+
   def receive = {
+
     // --- New sensor event --- //
     case NewSensorEvent(sensorEvent) =>
+      reloadSettings()
       val alarmStatus = alarmStatusDao.getAlarmStatus.get
       // Check if the armBypass time has been elapsed and if so  add the violated zone to the alarm
       // & the violated sensor to the alarm status
-      if (alarmStatus.status == ARMED && alarmStatus.timeArmed + SECONDS_COMPLETELY_ARM < new DateTime().getMillis ) {
-        log.warning("Triggering alarm...")
+      if (alarmStatus.status == ARMED && alarmStatus.timeArmed + SECONDS_COMPLETELY_ARM < new DateTime().getMillis) {
+        log.info("About to trigger alarm if system is not disarmed before timeout...")
         val zonesStatus = getEnabledZonesForSensor(sensorEvent.sensorId)
         if (zonesStatus.nonEmpty) {
           zonesStatus.foreach(zs => alarmStatus.addNewZone(zs.zoneId))
@@ -59,22 +59,40 @@ class AlarmWatcherServiceActor extends Actor with ActorLogging {
           alarmStatusDao.update(alarmStatus)
         }
       }
+
     // --- Check if an enabled alarm should trigger external events --- //
     case CheckEnabledAlarms() =>
+      reloadSettings()
       val nowTime = new DateTime().getMillis
       val alarmStatus = alarmStatusDao.getAlarmStatus.get
       // Check if the time to disarm alarm been timeout OR max retries have been exhausted
       if (alarmStatus.status == ARMED && alarmStatus.violationTime != -1
         && ((alarmStatus.violationTime + ENABLED_ALARM_TIMEOUT < nowTime)
         || (alarmStatus.falseEnteredPasswords >= ENABLED_ALARM_MAX_RETRIES))) {
+        log.warning("Alarm triggered!!!")
         context.actorSelection("/user/emailService") ! AlarmTriggeredNotification()
         context.actorSelection("/user/smsService") ! AlarmTriggeredNotification()
         context.actorSelection("/user/pushBulletServiceActor") ! AlarmTriggeredNotification()
-        context.actorSelection("/user/webHooksServiceActor")! AlarmTriggeredNotification()
+        context.actorSelection("/user/soundServiceActor") ! AlarmTriggeredNotification()
+        context.actorSelection("/user/webHooksServiceActor") ! AlarmTriggeredNotification()
         // TODO Use notifier
       }
   }
 
+  /**
+   * Reload settings
+   */
+  def reloadSettings(): Unit = {
+    SECONDS_COMPLETELY_ARM = settingsDao.getSettings.get.systemSettings.delayToArm * 1000
+    ENABLED_ALARM_TIMEOUT = settingsDao.getSettings.get.systemSettings.maxSecondsToDisarm * 1000
+    ENABLED_ALARM_MAX_RETRIES = settingsDao.getSettings.get.systemSettings.maxAlarmPasswordRetries
+  }
+
+  /**
+   * Get the zones this sensors belongs to
+   * @param sensorId the id of the zone
+   * @return the corresponding [[com.itylos.core.domain.ZoneStatus]] instances
+   */
   def getEnabledZonesForSensor(sensorId: String): List[ZoneStatus] = {
     sensorDao.checkSensorsExistenceBySensorId(List(sensorId))
     val sensor = sensorDao.getSensorBySensorId(sensorId).get

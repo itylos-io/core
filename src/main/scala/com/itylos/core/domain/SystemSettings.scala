@@ -19,7 +19,7 @@ case class SystemSettings(var maxAlarmPasswordRetries: Int,
   extends DaoObject with ParameterValidator {
 
   def this() {
-    this(3, 15, 15,true,true,true,"accessToken_ChangeMe")
+    this(3, 15, 15,true,true,true,"itylosAccessToken")
   }
 
   /**

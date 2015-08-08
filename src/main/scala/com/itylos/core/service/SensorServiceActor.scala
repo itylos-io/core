@@ -26,7 +26,7 @@ object SensorServiceActor {
 /**
  * An actor responsible for managing [[com.itylos.core.domain.Sensor]]
  */
-class SensorServiceActor extends Actor with ActorLogging {
+class   SensorServiceActor extends Actor with ActorLogging {
   this: SensorComponent with SensorTypeComponent with ZoneComponent with ZoneStatusComponent =>
 
   val KERBEROS_SENSOR_TYPE_ID = "5"

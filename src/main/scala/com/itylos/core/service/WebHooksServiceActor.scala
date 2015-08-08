@@ -40,7 +40,7 @@ class WebHooksServiceActor extends Actor with ActorLogging {
   def receive = {
 
     // --- Notify for sensor event --- //
-    case NewSensorEventNotification(sensor, sensorEvent) =>
+    case NewSensorEventNotification(sensor, sensorEvent,kerberosImages) =>
       updateSettings()
       val msg = NewSensorEventMessage(message = new SensorEventDto(sensorEvent, sensor))
       notifyUris(msg.toJson.toString())

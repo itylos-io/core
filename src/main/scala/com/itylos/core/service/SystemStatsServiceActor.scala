@@ -41,7 +41,7 @@ class SystemStatsServiceActor extends Actor with ActorLogging with Notifications
       val diskStats = getDiskUsage
       val cputStats = getCpuUsage.toDouble.toInt
       val stats = SystemOSStatsDto(diskStats._1,diskStats._2,diskStats._3,memStats._1,memStats._2,memStats._3,cputStats)
-      notifyViaWebSocket(context, Event(stats))
+//      notifyViaWebSocket(context, Event(stats))
   }
 
 

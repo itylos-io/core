@@ -6,11 +6,14 @@ import com.itylos.core.dao.SensorComponent
 import com.itylos.core.domain._
 import com.itylos.core.exception.AlarmStatusEnum
 import com.itylos.core.rest.authenticators.{AccessTokenAuthenticator, BasicAuthenticator, TokenAuthenticator}
-import com.itylos.core.rest.dto.WeatherConditionsDto
+import com.itylos.core.rest.dto.{CoreApiVersionMetadata, RootResponse, WeatherConditionsDto}
 import com.itylos.core.service._
 import com.itylos.core.service.protocol._
+import com.typesafe.config.ConfigFactory
 import org.json4s.DefaultFormats
 import org.json4s.JsonAST.JObject
+import spray.http.StatusCodes
+import spray.http.StatusCodes._
 import spray.httpx.Json4sSupport
 import spray.routing._
 
@@ -31,7 +34,7 @@ with AccessTokenAuthenticator with CORSSupport with SensorComponent {
 
   implicit val timeout = Timeout(10 seconds)
 
-
+  /* Routes for weather conditions updates */
   val weatherConditionRoutes =
     cors {
       pathPrefix("api" / "v1") {
@@ -53,6 +56,32 @@ with AccessTokenAuthenticator with CORSSupport with SensorComponent {
       }
     }
 
+
+  /* Routes for kerberos events through webhooks*/
+  val kerberosEventsRoutes =
+    cors {
+      // --- events from kerberos --- //
+      pathPrefix("api" / "v1" / "kerberos" / "events") {
+        clientIP { ip =>
+          post {
+            entity(as[JObject]) { data =>
+              notifyKerberos(MotionDetected(
+                data.values("instanceName").toString,
+                data.values("pathToImage").toString,
+                ip.toOption.map(_.getHostAddress).getOrElse("unknown")))
+              complete("ok")
+            }
+          }
+        }
+      }~ pathPrefix("api" / "v1" / "kerberos" / "image_proxy") {
+        parameters('imageUrl) { (imageUrl) => {
+          get {
+            redirect(spray.http.Uri.apply(imageUrl),StatusCodes.MovedPermanently)
+            }
+          }
+        }
+      }
+    }
 
   /* Routes for users management */
   val userRoutes =
@@ -148,7 +177,7 @@ with AccessTokenAuthenticator with CORSSupport with SensorComponent {
             entity(as[JObject]) { data =>
               val status = AlarmStatusEnum.from(getParameter(data, "status").get)
               val password = getParameter(data, "password", isRequired = false).getOrElse("")
-              handleKerberosApiRequest(UpdateKerberosInstances(status))
+              notifyKerberos(UpdateKerberosInstances(status))
               handleAlarmsApiRequest(UpdateAlarmStatus(status, password, user))
             }
           }
@@ -231,13 +260,26 @@ with AccessTokenAuthenticator with CORSSupport with SensorComponent {
           // --- Get kerberos instance name --- //
           path("api" / "v1" / "settings" / "kerberos" / "instance_name" / Segment / Segment / Segment) { (ip, username, password) =>
             get {
-              handleSettingsApiRequest(GetKerberosInstanceRq(ip, username, password))
+              handleKerberosApiRequest(GetKerberosInstanceRq(ip, username, password))
             }
           } ~
           // --- Get push bullet devices --- //
           path("api" / "v1" / "settings" / "pushbullet" / "devices" / Segment) { accessToken =>
             get {
               handleSettingsApiRequest(GetPushBulletDevicesRq(accessToken))
+            }
+          } ~
+          // --- Get latest release --- //
+          path("api" / "v1" / "settings" / "latest_release") {
+            get {
+              complete(OK, RootResponse(response = getLatestRelease))
+            }
+          } ~
+          // --- Get current version --- //
+          path("api" / "v1" / "settings" / "current_version") {
+            get {
+              val tagName = "v" + ConfigFactory.load().getString("version")
+              complete(OK, RootResponse(response = CoreApiVersionMetadata(tagName, "", "")))
             }
           }
       }
@@ -293,14 +335,6 @@ with AccessTokenAuthenticator with CORSSupport with SensorComponent {
       }
     }
 
-  val itylosEventsRoutes =
-    cors {
-      pathPrefix("api" / "v1" / "kerberos" / "callback") {
-        post {
-          complete("ok")
-        }
-      }
-    }
 
   /** Routes for sensors events management **/
   val sensorEventsRoutes =
@@ -383,6 +417,9 @@ with AccessTokenAuthenticator with CORSSupport with SensorComponent {
       }
     }
 
+  def notifyKerberos(message: KerberosManagementProtocol): Unit =
+    actorRefFactory.actorSelection("/user/kerberosManager") ! message
+
   def notifyAlarmWatcher(message: AlarmStatusProtocol): Unit =
     actorRefFactory.actorSelection("/user/alarmWatcher") ! message
 
@@ -415,5 +452,24 @@ with AccessTokenAuthenticator with CORSSupport with SensorComponent {
 
   def handleKerberosApiRequest(message: KerberosManagementProtocol): Route =
     ctx => perRequest(actorRefFactory, ctx, KerberosManagementActor.props(), message)
+
+
+  /**
+   * Get latest release published on github
+   */
+  def getLatestRelease: CoreApiVersionMetadata = {
+    import spray.json._
+    // Make http request to PushBullet
+    val result = scalaj.http.Http("https://api.github.com/repos/kerberos-io/machinery/releases/latest")
+      .header("Content-Type", "application/json")
+      .header("Charset", "UTF-8")
+      .option(scalaj.http.HttpOptions.readTimeout(10000)).asString.body.parseJson.asJsObject
+
+    val tag_name = result.fields("tag_name").asInstanceOf[spray.json.JsString].value
+    val html_url = result.fields("html_url").asInstanceOf[spray.json.JsString].value
+    val published_at = result.fields("published_at").asInstanceOf[spray.json.JsString].value
+    CoreApiVersionMetadata(tag_name, html_url, published_at)
+  }
+
 
 }

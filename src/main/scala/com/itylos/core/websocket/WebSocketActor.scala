@@ -20,6 +20,7 @@ object WebSocketActor {
  */
 class WebSocketActor() extends Actor with ActorLogging {
 
+  val KERBEROS_SENSOR_TYPE_ID = "5"
   val clients = mutable.ListBuffer[WebSocket]()
 
   import com.itylos.core.websocket.ItylosEventsJsonProtocol._
@@ -40,7 +41,7 @@ class WebSocketActor() extends Actor with ActorLogging {
           clients.foreach(ws => ws.send(msg.toJson.toString()))
         // New Sensor Event
         case sensorEventRs: NewSensorEventNotification =>
-          val msg = NewSensorEventMessage(message = new SensorEventDto(sensorEventRs.sensorEvent, sensorEventRs.sensor))
+          val msg = NewSensorEventMessage(message = new SensorEventDto(sensorEventRs.sensorEvent, sensorEventRs.sensor,sensorEventRs.kerberosImages))
           clients.foreach(ws => ws.send(msg.toJson.toString()))
         // Triggered alarm
         case alarmTriggered: AlarmTriggeredNotification =>

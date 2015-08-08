@@ -28,25 +28,38 @@ class SoundServiceActor extends Actor with ActorLogging {
     log.info("Starting sound service")
   }
 
+  var PLAY_SOUNDS_FOR_SENSOR_EVENTS = false
+  var PLAY_SOUNDS_FOR_TRIGGERED_ALARM = false
+  var PLAY_SOUNDS_FOR_ALARM_STATUS_UPDATES = false
+
   def receive = {
 
     // --- New sensor event --- //
-    case NewSensorEventNotification(sensor, sensorEvent) =>
-      if (settingsDao.getSettings.get.systemSettings.playSoundsForSensorEvents) {
-        if (sensorEvent.status == 1) playSound("open.wav") else playSound("closed.wav")
+    case NewSensorEventNotification(sensor, sensorEvent,kerberosImages) =>
+      if (PLAY_SOUNDS_FOR_SENSOR_EVENTS) {
+        if (sensorEvent.status == 1) playSound("sensor_event_0.wav") else playSound("sensor_event_1.wav")
       }
 
     // --- Alarm triggered --- //
     case AlarmTriggeredNotification() =>
-      if (settingsDao.getSettings.get.systemSettings.playSoundsForTriggeredAlarm)
-        playSound("closed.wav")
+      if (PLAY_SOUNDS_FOR_TRIGGERED_ALARM)
+        playSound("alarm_triggered.wav")
 
     // --- Alarm status updated --- //
     case UpdatedAlarmStatusNotification(alarmStatus) =>
       if (settingsDao.getSettings.get.systemSettings.playSoundsForAlarmStatusUpdates) {
-        if (alarmStatus.currentStatus == "ARMED") playSound("open.wav") else playSound("closed.wav")
+        if (alarmStatus.currentStatus == "ARMED") playSound("system_armed.wav") else playSound("system_disarmed.wav")
       }
+  }
 
+  /**
+   * Update the settings because they change on the fly
+   */
+  def updateSettings(): Unit = {
+    val settings = settingsDao.getSettings.get.systemSettings
+    PLAY_SOUNDS_FOR_SENSOR_EVENTS = settings.playSoundsForSensorEvents
+    PLAY_SOUNDS_FOR_TRIGGERED_ALARM = settings.playSoundsForTriggeredAlarm
+    PLAY_SOUNDS_FOR_ALARM_STATUS_UPDATES = settings.playSoundsForAlarmStatusUpdates
   }
 
 

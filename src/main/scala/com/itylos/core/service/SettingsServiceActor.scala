@@ -73,7 +73,10 @@ class SettingsServiceActor extends Actor with ActorLogging {
       settingsDao.deleteSettings()
       settings.kerberosSettings = kerberosSettings
       settingsDao.save(settings)
+      // TODO kill actor
       context.actorOf(SensorServiceActor.props()) ! UpdateKerberosSensors(settingsDao.getSettings.get.kerberosSettings.kerberosInstances)
+      context.actorSelection("/user/kerberosManager") ! ConfigureKerberosInstances(settingsDao.getSettings.get.kerberosSettings.kerberosInstances)
+
       sender() ! GetSystemSettingsRs(getSettingsAsDto)
 
     // --- Update WebHookSettings --- //
@@ -92,11 +95,6 @@ class SettingsServiceActor extends Actor with ActorLogging {
     case GetPushBulletDevicesRq(accessToken) =>
       val activeDevices = getPushBulletDevices(accessToken)
       sender() ! GetPushBulletDevicesRs(activeDevices)
-
-    // --- Get instance name from a kerberos instance --- //
-    case GetKerberosInstanceRq(ip, username, password) =>
-      val kerberosInstance = new KerberosInstance("instanceName", "ip", "username", "password")
-      sender() ! GetKerberosInstanceRs(kerberosInstance)
 
   }
 

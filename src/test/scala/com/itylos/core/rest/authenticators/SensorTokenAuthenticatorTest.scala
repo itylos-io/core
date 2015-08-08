@@ -41,7 +41,7 @@ with AccessTokenAuthenticator with Directives with ScalatestRouteTest {
     }
     "should authenticate sensor when token is valid " in {
       when(settingsDao.getSettings).thenReturn(Some(new Settings()))
-      Get("/?sensorToken=accessToken_ChangeMe") ~> simpleRoute ~> check {
+      Get("/?sensorToken=itylosAccessToken") ~> simpleRoute ~> check {
         responseAs[String] === "OK"
       }
     }

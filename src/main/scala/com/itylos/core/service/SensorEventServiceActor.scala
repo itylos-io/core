@@ -1,11 +1,13 @@
 package com.itylos.core.service
 
 import akka.actor.{Actor, ActorLogging, Props}
-import com.itylos.core.dao.{SensorComponent, SensorEventComponent, SensorTypeComponent}
+import com.itylos.core.dao.{KerberosEventImagesComponent, SensorComponent, SensorEventComponent, SensorTypeComponent}
 import com.itylos.core.domain.SensorEvent
 import com.itylos.core.exception.{SensorDoesNotExistException, SensorTypeDoesNotExistException}
 import com.itylos.core.rest.dto.SensorEventDto
 import com.itylos.core.service.protocol._
+
+import scala.collection.mutable.ListBuffer
 
 /**
  * Companion object to properly initiate [[com.itylos.core.service.SensorEventServiceActor]]
@@ -13,10 +15,11 @@ import com.itylos.core.service.protocol._
 object SensorEventServiceActor {
   def props(): Props = {
     Props(new SensorEventServiceActor() with SensorEventComponent with SensorComponent
-      with SensorTypeComponent with NotificationsHelper {
+      with SensorTypeComponent with KerberosEventImagesComponent with NotificationsHelper {
       val sensorDao = new SensorDao
       val sensorEventDao = new SensorEventDao
       val sensorTypeDao = new SensorTypeDao()
+      val kerberosEventImagesDao = new KerberosEventImagesDao
     })
   }
 }
@@ -25,9 +28,11 @@ object SensorEventServiceActor {
  * An actor responsible for managing [[com.itylos.core.domain.SensorEvent]]
  */
 class SensorEventServiceActor extends Actor with ActorLogging {
-  this: SensorEventComponent with SensorComponent with SensorTypeComponent with NotificationsHelper =>
+  this: SensorEventComponent with SensorComponent with SensorTypeComponent with KerberosEventImagesComponent
+    with NotificationsHelper =>
 
   val MAX_SENSOR_EVENTS_TO_STORE_PER_SENSOR = 20
+  val KERBEROS_SENSOR_TYPE_ID = "5"
 
   def receive = {
 
@@ -41,9 +46,12 @@ class SensorEventServiceActor extends Actor with ActorLogging {
       if (sensorType == None) throw new SensorTypeDoesNotExistException(sensorData.get.sensorTypeId)
       if (!sensorType.get.isBatteryPowered) sensorEvent.batteryLevel = -1
       sensorEventDao.save(sensorEvent)
-      sender ! GetSensorEventsRs(List())
       removePastEvents(sensorEvent.sensorId)
-      notifyAll(context, NewSensorEventNotification(sensorData.get, sensorEvent))
+      val kerberosEventImages = if (sensorData.get.sensorTypeId == KERBEROS_SENSOR_TYPE_ID)
+        Some(kerberosEventImagesDao.getImagesForKerberosEvent(sensorEvent.kerberosEventId.get).get.imagesUrls)
+      else None
+      notifyAll(context, NewSensorEventNotification(sensorData.get, sensorEvent, kerberosEventImages))
+      sender ! GetSensorEventsRs(List())
 
     // --- Get sensor events --- //
     case GetSensorEventsRq(sensorId, limit, offset) =>
@@ -84,8 +92,23 @@ class SensorEventServiceActor extends Actor with ActorLogging {
    * @return the converted DTO objects
    */
   private def convert2DTOs(sensorEvents: List[SensorEvent]): List[SensorEventDto] = {
-    for (sensorEvent <- sensorEvents)
-      yield new SensorEventDto(sensorEvent, sensorDao.getSensorBySensorId(sensorEvent.sensorId).get)
+
+    var sensorEventsAsDTOs = new ListBuffer[SensorEventDto]()
+    for (sensorEvent <- sensorEvents)  {
+      val sensor = sensorDao.getSensorBySensorId(sensorEvent.sensorId)
+
+      // sensor has been deleted or renamed? We need to delete those sensor events...
+      if (sensor == None) {
+        sensorEventDao.removeEventsForSensor(sensorEvent.sensorId)
+      }else{
+        // If it is a kerberos sensor, fetch associated images
+        val kerberosEventImages = if (sensor.get.sensorTypeId == KERBEROS_SENSOR_TYPE_ID)
+          Some(kerberosEventImagesDao.getImagesForKerberosEvent(sensorEvent.kerberosEventId.get).get.imagesUrls)
+        else None
+        sensorEventsAsDTOs += new SensorEventDto(sensorEvent, sensor.get, kerberosEventImages)
+      }
+    }
+    sensorEventsAsDTOs.toList
   }
 
 

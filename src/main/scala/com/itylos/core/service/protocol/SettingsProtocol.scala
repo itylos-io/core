@@ -55,11 +55,6 @@ case class GetSystemSettingsRq() extends SettingsProtocol
 case class GetPushBulletDevicesRq(accessToken: String) extends SettingsProtocol
 
 /**
- * Message to request a kerberos instance for it's configured name
- */
-case class GetKerberosInstanceRq(ip: String,username:String,password:String) extends SettingsProtocol
-
-/**
  * Response message to GetSystemSettingsRq
  */
 case class GetSystemSettingsRs(settings: SettingsDto) extends SettingsProtocol
