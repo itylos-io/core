@@ -41,7 +41,7 @@ with WordSpecLike with Matchers with TestEnvironmentRepos with StopSystemAfterAl
   when(alarmStatusDao.getAlarmStatus).thenReturn(Some(alarmStatus))
 
   // Start mock server
-  var mockServer = startClientAndServer(10050)
+  var mockServer = startClientAndServer(10051)
   mockServer
     .when(request().withPath("/trigger"))
     .respond(response().withHeaders(
@@ -55,7 +55,7 @@ with WordSpecLike with Matchers with TestEnvironmentRepos with StopSystemAfterAl
     settings.pushBulletSettings.notifyForSensorEvents = true
     settings.pushBulletSettings.notifyForAlarms = true
     settings.pushBulletSettings.devices = pushbulletDevices
-    settings.pushBulletSettings.pushBulletEndpoint = "http://localhost:10050/trigger"
+    settings.pushBulletSettings.pushBulletEndpoint = "http://localhost:10051/trigger"
     when(settingsDao.getSettings).thenReturn(Some(settings))
 
     mockServer.reset()

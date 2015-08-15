@@ -51,6 +51,7 @@ class ZoneTest extends WordSpecLike with Matchers with BeforeAndAfterEach with S
       }
     }
     "setup zone from json data without id" in {
+      DateTimeUtils.setCurrentMillisFixed(1000L)
       val jObject = JObject(List(zoneId, zoneName, zoneDesc, zoneSensorOIds))
       val zone = new Zone()
       zone.fromJObject(jObject, isIdRequired = true)
