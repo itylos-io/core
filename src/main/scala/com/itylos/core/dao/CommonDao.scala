@@ -18,14 +18,14 @@ abstract class CommonDao[T](val db: com.mongodb.casbah.MongoDB = MongoFactory.mo
    * Save document to collection
    * @param doc the document to persist
    */
-  def save(doc: DaoObject):AnyRef= {
+  def save(doc: DaoObject): AnyRef = {
     db(getCollectionName).insert(doc.asDbObject())
   }
 
   /**
    * Drops collection
    */
-  def drop(): Unit ={
+  def drop(): Unit = {
     db(getCollectionName).drop()
   }
 
@@ -33,8 +33,8 @@ abstract class CommonDao[T](val db: com.mongodb.casbah.MongoDB = MongoFactory.mo
    * Query for the only entry
    * @return the only entry if any
    */
-  protected def getOne: Option[MongoCollection#T] ={
-   db(getCollectionName).findOne()
+  protected def getOne: Option[MongoCollection#T] = {
+    db(getCollectionName).findOne()
   }
 
   /**

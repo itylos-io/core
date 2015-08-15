@@ -11,6 +11,6 @@ with RestRoutes {
 
   def receive = runRoute(handleRejections(customRejectionHandler)
     (handleExceptions(customExceptionHandler)(userRoutes~ kerberosEventsRoutes ~ sensorEventsRoutes ~ sensorRoutes ~ zoneRoutes
-      ~ settingsRoutes ~ alarmRoutes ~ weatherConditionRoutes )))
+      ~ settingsRoutes ~ alarmRoutes ~ weatherConditionRoutes ~ sensorEventStatistics)))
 
 }

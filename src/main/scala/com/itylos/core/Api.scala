@@ -48,6 +48,8 @@ object Api {
     system.actorOf(PushBulletServiceActor.props(), "pushBulletServiceActor")
     system.actorOf(WebHooksServiceActor.props(), "webHooksServiceActor")
     system.actorOf(SoundServiceActor.props(), "soundServiceActor")
+    system.actorOf(StatisticsServiceActor.props(), "statisticsActor")
+    system.actorOf(HealthCheckServiceActor.props(), "healthCheckActor")
   }
 
   private def triggerInitialConfig(system: ActorSystem): Unit = {

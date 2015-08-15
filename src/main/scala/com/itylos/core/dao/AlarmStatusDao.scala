@@ -48,6 +48,7 @@ trait AlarmStatusComponent {
         "emailNotificationsSent" -> alarmStatus.emailNotificationsSent,
         "pushBulletNotificationsSent" -> alarmStatus.pushBulletNotificationsSent,
         "smsSent" -> alarmStatus.smsSent,
+        "healthCheckFailed" -> alarmStatus.healthCheckFailed,
         "violationTime" -> alarmStatus.violationTime,
         "timeArmed" -> alarmStatus.timeArmed,
         "timeDisArmed" -> alarmStatus.timeDisArmed,

@@ -12,12 +12,13 @@ import scala.concurrent.ExecutionContext.Implicits.global
 object AlarmWatcherServiceActor {
   def props(): Props = {
     Props(new AlarmWatcherServiceActor() with ZoneComponent
-      with ZoneStatusComponent with AlarmStatusComponent with SensorComponent with SettingsComponent {
+      with ZoneStatusComponent with AlarmStatusComponent with SensorComponent with SettingsComponent with HealthCheckComponent {
       val zoneDao = new ZoneDao
       val sensorDao = new SensorDao
       val zoneStatusDao = new ZoneStatusDao
       val alarmStatusDao = new AlarmStatusDao
       val settingsDao = new SettingsDao
+      val healthCheckDao = new HealthCheckDao
     })
   }
 }
@@ -27,7 +28,7 @@ object AlarmWatcherServiceActor {
  */
 class AlarmWatcherServiceActor extends Actor with ActorLogging {
   this: ZoneStatusComponent with ZoneComponent
-    with AlarmStatusComponent with SensorComponent with SettingsComponent =>
+    with AlarmStatusComponent with SensorComponent with SettingsComponent with HealthCheckComponent =>
 
   var ENABLED_ALARM_TIMEOUT = 15 * 1000
   var ENABLED_ALARM_MAX_RETRIES = 3
@@ -63,19 +64,35 @@ class AlarmWatcherServiceActor extends Actor with ActorLogging {
     // --- Check if an enabled alarm should trigger external events --- //
     case CheckEnabledAlarms() =>
       reloadSettings()
+      var shouldTriggerAlarm = false
       val nowTime = new DateTime().getMillis
       val alarmStatus = alarmStatusDao.getAlarmStatus.get
       // Check if the time to disarm alarm been timeout OR max retries have been exhausted
       if (alarmStatus.status == ARMED && alarmStatus.violationTime != -1
         && ((alarmStatus.violationTime + ENABLED_ALARM_TIMEOUT < nowTime)
         || (alarmStatus.falseEnteredPasswords >= ENABLED_ALARM_MAX_RETRIES))) {
+        shouldTriggerAlarm = true
+      }
+
+      // Check if a health check has failed
+      if (alarmStatus.status == ARMED) {
+        healthCheckDao.getAllHealthChecks.foreach(healthCheck => {
+          if (healthCheck.lastCheckStatusCode != 200) {
+            shouldTriggerAlarm = true
+            alarmStatus.healthCheckFailed = true
+            alarmStatusDao.update(alarmStatus)
+          }
+        })
+      }
+
+      if (shouldTriggerAlarm) {
+        // TODO Use notifier
         log.warning("Alarm triggered!!!")
         context.actorSelection("/user/emailService") ! AlarmTriggeredNotification()
         context.actorSelection("/user/smsService") ! AlarmTriggeredNotification()
         context.actorSelection("/user/pushBulletServiceActor") ! AlarmTriggeredNotification()
         context.actorSelection("/user/soundServiceActor") ! AlarmTriggeredNotification()
         context.actorSelection("/user/webHooksServiceActor") ! AlarmTriggeredNotification()
-        // TODO Use notifier
       }
   }
 

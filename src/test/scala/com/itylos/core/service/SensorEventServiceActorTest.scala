@@ -120,7 +120,6 @@ with BeforeAndAfterEach {
     when(sensorDao.getSensorByObjectId(sensorOId)).thenReturn(Some(sensor))
     when(sensorEventDao.getSensorEvents(None, 5, 0)).thenReturn(List(sensorEvent))
     actorRef ! RemoveSensorEventsForSensor(sensorOId)
-    //    soundServiceProbe.expectNoMsg()
     verify(sensorEventDao).removeEventsForSensor(sensor.sensorId)
     expectMsg(GetSensorEventsRs(sensorEventsDto))
   }

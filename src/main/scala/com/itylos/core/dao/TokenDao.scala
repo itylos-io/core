@@ -3,7 +3,6 @@ package com.itylos.core.dao
 import com.itylos.core.domain.Token
 import com.mongodb.DBObject
 import com.mongodb.casbah.Imports._
-import com.mongodb.casbah.commons.MongoDBObject
 
 /**
  * Dao for Tokens

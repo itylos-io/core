@@ -210,7 +210,6 @@ class KerberosManagementActor extends Actor with ActorLogging {
           }
         }
       }
-
     }
     ip
   }

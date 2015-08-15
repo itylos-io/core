@@ -16,6 +16,7 @@ case class AlarmStatus(var oid: Option[String] = None,
                        var falseEnteredPasswords: Int = 0,
                        var emailNotificationsSent: Boolean = false,
                        var smsSent: Boolean = false,
+                       var healthCheckFailed: Boolean = false,
                        var pushBulletNotificationsSent: Boolean = false,
                        var violationTime: Long = -1L,
                        var timeArmed: Long = new DateTime().getMillis, // The time the alarm was armed
@@ -57,6 +58,7 @@ case class AlarmStatus(var oid: Option[String] = None,
       obj.getAs[Int]("falseEnteredPasswords").get,
       obj.getAs[Boolean]("emailNotificationsSent").get,
       obj.getAs[Boolean]("smsSent").get,
+      obj.getAs[Boolean]("healthCheckFailed").get,
       obj.getAs[Boolean]("pushBulletNotificationsSent").get,
       obj.getAs[Long]("violationTime").get,
       obj.getAs[Long]("timeArmed").get,
@@ -84,6 +86,7 @@ case class AlarmStatus(var oid: Option[String] = None,
     builder += ("timeDisArmed" -> timeDisArmed)
     builder += ("userIdArmed" -> userIdArmed)
     builder += ("userIdDisarmed" -> userIdDisarmed)
+    builder += ("healthCheckFailed" -> healthCheckFailed)
     builder.result()
   }
 

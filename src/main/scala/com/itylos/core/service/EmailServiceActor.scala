@@ -5,7 +5,7 @@ import java.util
 
 import akka.actor.{Actor, ActorLogging, Props}
 import com.itylos.core.dao._
-import com.itylos.core.domain.AlarmStatus
+import com.itylos.core.domain.{AlarmStatus, HealthCheck}
 import com.itylos.core.service.protocol.AlarmTriggeredNotification
 import org.apache.velocity.VelocityContext
 import org.apache.velocity.app.VelocityEngine
@@ -15,11 +15,13 @@ import org.joda.time.{DateTime, DateTimeZone}
 
 object EmailServiceActor {
   def props(): Props = {
-    Props(new EmailServiceActor() with ZoneComponent with AlarmStatusComponent with SensorComponent with SettingsComponent {
+    Props(new EmailServiceActor() with ZoneComponent with AlarmStatusComponent with SensorComponent
+      with SettingsComponent with HealthCheckComponent {
       val zoneDao = new ZoneDao
       val sensorDao = new SensorDao
       val alarmStatusDao = new AlarmStatusDao
       val settingsDao = new SettingsDao
+      val healthCheckDao = new HealthCheckDao
     })
   }
 }
@@ -28,7 +30,7 @@ object EmailServiceActor {
  * An actor responsible for managing alarms
  */
 class EmailServiceActor extends Actor with ActorLogging {
-  this: ZoneComponent with AlarmStatusComponent with SensorComponent with SettingsComponent =>
+  this: ZoneComponent with AlarmStatusComponent with SensorComponent with SettingsComponent with HealthCheckComponent =>
 
 
   override def preStart() {
@@ -41,10 +43,16 @@ class EmailServiceActor extends Actor with ActorLogging {
     case AlarmTriggeredNotification() =>
       val alarmStatus = alarmStatusDao.getAlarmStatus.get
       if (!alarmStatus.emailNotificationsSent && settingsDao.getSettings.get.emailSettings.isEnabled) {
-        log.info("Sending emails for zone [{}]", alarmStatus.zoneIds)
         alarmStatus.emailNotificationsSent = true
         alarmStatusDao.update(alarmStatus)
-        val htmlData = getHtmlData(alarmStatus)
+        val htmlData = if (!alarmStatus.healthCheckFailed) {
+          log.info("Sending emails for zone [{}]", alarmStatus.zoneIds)
+          getHtmlData(alarmStatus)
+        } else {
+          log.info("Sending emails due to health check failure")
+          val failedChecks = healthCheckDao.getAllHealthChecks.filter(hc => hc.lastCheckStatusCode != 200)
+          getFailedToHealthCheckEmailMessage(failedChecks)
+        }
         sendEmailAlert(alarmStatus, htmlData)
       }
   }
@@ -65,7 +73,7 @@ class EmailServiceActor extends Actor with ActorLogging {
     emailSettings.emailsToNotify.foreach(email => {
       mailer(Envelope.from("admin" `@` "itylos.com")
         .to(email.split("@")(0) `@` email.split("@")(1))
-        .subject("Itylos Alert @ " + new DateTime().withMillis(alarmStatus.violationTime)
+        .subject("Itylos Alert @ " + new DateTime()
         .withZone(DateTimeZone.UTC).toString)
         .content(Multipart().html(htmlData))).onSuccess {
         case _ => log.info("Emails delivered to " + email)
@@ -110,5 +118,30 @@ class EmailServiceActor extends Actor with ActorLogging {
     sw.toString
   }
 
+
+  /**
+   * Setup the html string for the email associated to health check failure
+   */
+  def getFailedToHealthCheckEmailMessage(failedHealthChecks: List[HealthCheck]): String = {
+
+    val healthChecks = new util.ArrayList[util.HashMap[String, String]]()
+    failedHealthChecks.foreach(failedHealthCheck => {
+      val map = new util.HashMap[String, String]()
+      map.put("url", failedHealthCheck.url)
+      healthChecks.add(map)
+    })
+
+    val ve = new VelocityEngine()
+    ve.setProperty(RuntimeConstants.RESOURCE_LOADER, "classpath")
+    ve.setProperty("classpath.resource.loader.class", classOf[ClasspathResourceLoader].getName)
+    ve.init()
+    val context = new VelocityContext()
+    val t = ve.getTemplate("templates/health_check_failed_email.vm")
+    context.put("healthChecks", healthChecks)
+    context.put("time", new DateTime().withZone(DateTimeZone.UTC).toString)
+    val sw = new StringWriter
+    t.merge(context, sw)
+    sw.toString
+  }
 
 }

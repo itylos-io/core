@@ -4,7 +4,8 @@ import org.mockito.Mockito
 
 trait TestEnvironmentRepos extends SensorTypeComponent with TokenDaoComponent
 with UserDaoComponent with ZoneStatusComponent with ZoneComponent with SensorComponent with KerberosEventImagesComponent
-with SettingsComponent with SensorEventComponent with AlarmStatusComponent with AlarmStatusHistoryComponent {
+with SettingsComponent with SensorEventComponent with AlarmStatusComponent with AlarmStatusHistoryComponent
+with SensorEventsStatisticsComponent {
 
   override val userDao = TestEnvironmentRepos.userDao.asInstanceOf[UserDao]
   override val sensorTypeDao = TestEnvironmentRepos.sensorTypeDao.asInstanceOf[SensorTypeDao]
@@ -17,12 +18,14 @@ with SettingsComponent with SensorEventComponent with AlarmStatusComponent with 
   override val alarmStatusDao = TestEnvironmentRepos.alarmStatusDao.asInstanceOf[AlarmStatusDao]
   override val alarmStatusHistoryDao = TestEnvironmentRepos.alarmStatusHistoryDao.asInstanceOf[AlarmStatusHistoryDao]
   override val kerberosEventImagesDao = TestEnvironmentRepos.kerberosEventImagesDao.asInstanceOf[KerberosEventImagesDao]
+  override val sensorEventsStatisticsDao = TestEnvironmentRepos.sensorEventsStatisticsDao.asInstanceOf[SensorEventsStatisticsDao]
 
 }
 
 object TestEnvironmentRepos extends SensorTypeComponent with TokenDaoComponent
 with UserDaoComponent with ZoneStatusComponent with ZoneComponent with SensorComponent with KerberosEventImagesComponent
-with SettingsComponent with SensorEventComponent with AlarmStatusComponent with AlarmStatusHistoryComponent {
+with SettingsComponent with SensorEventComponent with AlarmStatusComponent with AlarmStatusHistoryComponent
+with SensorEventsStatisticsComponent {
 
   override val userDao = Mockito.mock(classOf[UserDao])
   override val sensorTypeDao = Mockito.mock(classOf[SensorTypeDao])
@@ -35,6 +38,7 @@ with SettingsComponent with SensorEventComponent with AlarmStatusComponent with 
   override val alarmStatusDao = Mockito.mock(classOf[AlarmStatusDao])
   override val alarmStatusHistoryDao = Mockito.mock(classOf[AlarmStatusHistoryDao])
   override val kerberosEventImagesDao = Mockito.mock(classOf[KerberosEventImagesDao])
+  override val sensorEventsStatisticsDao = Mockito.mock(classOf[SensorEventsStatisticsDao])
 
 }
 

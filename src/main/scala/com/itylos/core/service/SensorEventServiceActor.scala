@@ -94,17 +94,22 @@ class SensorEventServiceActor extends Actor with ActorLogging {
   private def convert2DTOs(sensorEvents: List[SensorEvent]): List[SensorEventDto] = {
 
     var sensorEventsAsDTOs = new ListBuffer[SensorEventDto]()
-    for (sensorEvent <- sensorEvents)  {
+    for (sensorEvent <- sensorEvents) {
       val sensor = sensorDao.getSensorBySensorId(sensorEvent.sensorId)
 
       // sensor has been deleted or renamed? We need to delete those sensor events...
       if (sensor == None) {
         sensorEventDao.removeEventsForSensor(sensorEvent.sensorId)
-      }else{
-        // If it is a kerberos sensor, fetch associated images
-        val kerberosEventImages = if (sensor.get.sensorTypeId == KERBEROS_SENSOR_TYPE_ID)
-          Some(kerberosEventImagesDao.getImagesForKerberosEvent(sensorEvent.kerberosEventId.get).get.imagesUrls)
-        else None
+      } else {
+        // If it is a kerberos sensor, fetch associated images if any
+        val kerberosEventImages =
+          if (sensor.get.sensorTypeId == KERBEROS_SENSOR_TYPE_ID && sensorEvent.kerberosEventId!=None) {
+            val images = kerberosEventImagesDao.getImagesForKerberosEvent(sensorEvent.kerberosEventId.get)
+            if (images != None) Some(images.get.imagesUrls) else None
+          }
+          else {
+            None
+          }
         sensorEventsAsDTOs += new SensorEventDto(sensorEvent, sensor.get, kerberosEventImages)
       }
     }

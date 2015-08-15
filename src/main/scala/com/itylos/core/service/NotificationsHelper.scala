@@ -19,6 +19,7 @@ trait NotificationsHelper {
     notifyViaWebHooks(context, message)
     notifyViaPushBullet(context, message)
     notifySoundService(context, message)
+    notifyStatisticsService(context,message)
   }
 
   /**
@@ -47,6 +48,13 @@ trait NotificationsHelper {
    */
   private def notifySoundService(context: ActorContext, message: NotificationsProtocol): Unit = {
     context.actorSelection("/user/soundServiceActor") ! message
+  }
+
+  /**
+   * Notify sound service for event
+   */
+  private def notifyStatisticsService(context: ActorContext, message: NotificationsProtocol): Unit = {
+    context.actorSelection("/user/statisticsActor") ! message
   }
 
 

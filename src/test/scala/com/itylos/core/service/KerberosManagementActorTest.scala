@@ -96,7 +96,7 @@ with WordSpecLike with Matchers with TestEnvironmentRepos with StopSystemAfterAl
       mockServer.verify(request().withMethod("POST").withPath("/api/v1/sensors/events"))
       mockServer.stop()
     }
-    "should not send sensor event when second motion detected message is receive from kerberos within timeout" in {
+    "should not send sensor event when second motion detected message is received from kerberos within timeout" in {
       val tempActorRef = TestActorRef(Props(new KerberosManagementActor() with TestEnvironmentRepos {}))
       // First kerberos event
       when(kerberosEventImagesDao.getImagesForKerberosEvent(any(classOf[String]))).thenReturn(None)
@@ -109,9 +109,9 @@ with WordSpecLike with Matchers with TestEnvironmentRepos with StopSystemAfterAl
         .thenReturn(Some(kerberosEventImages))
       tempActorRef ! MotionDetected("name", "imageUrl", "localhost")
       verify(kerberosEventImagesDao).update(any(classOf[KerberosEventImages]))
-      verify(kerberosEventImages).addImageUrlToEvents("http://localhost/capture/imageUrl")
+      verify(kerberosEventImages).addImageUrlToEvents("http://"+getCoreApiIp+":18081/api/v1/kerberos/image_proxy?imageUrl=http://localhost/capture/imageUrl")
     }
-    "should send sensor event when not motion message has been detected after timeout" in {
+    "should send sensor event when motion message has been detected after timeout" in {
       // Fixed time for easier testing
       DateTimeUtils.setCurrentMillisFixed(1000L)
       val mockServer = startClientAndServer(18081)
@@ -132,5 +132,29 @@ with WordSpecLike with Matchers with TestEnvironmentRepos with StopSystemAfterAl
       mockServer.verify(request().withMethod("PUT").withPath("/api/v1/io"), VerificationTimes.exactly(0))
     }
 
+  }
+
+
+  /**
+   * @return the IP of the core API server
+   */
+  def getCoreApiIp: String = {
+    var ip = ""
+    val interfaces = java.net.NetworkInterface.getNetworkInterfaces
+    while (interfaces.hasMoreElements) {
+      val iface = interfaces.nextElement()
+      // filters out 127.0.0.1 and inactive interfaces
+      if (!iface.isLoopback && iface.isUp) {
+        val addresses = iface.getInetAddresses
+        while (addresses.hasMoreElements) {
+          val addr = addresses.nextElement
+          ip = addr.getHostAddress
+          if (!ip.contains(":")) {
+            return ip
+          }
+        }
+      }
+    }
+    ip
   }
 }

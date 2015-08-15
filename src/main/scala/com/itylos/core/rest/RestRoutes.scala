@@ -73,12 +73,12 @@ with AccessTokenAuthenticator with CORSSupport with SensorComponent {
             }
           }
         }
-      }~ pathPrefix("api" / "v1" / "kerberos" / "image_proxy") {
+      } ~ pathPrefix("api" / "v1" / "kerberos" / "image_proxy") {
         parameters('imageUrl) { (imageUrl) => {
           get {
-            redirect(spray.http.Uri.apply(imageUrl),StatusCodes.MovedPermanently)
-            }
+            redirect(spray.http.Uri.apply(imageUrl), StatusCodes.MovedPermanently)
           }
+        }
         }
       }
     }
@@ -257,6 +257,21 @@ with AccessTokenAuthenticator with CORSSupport with SensorComponent {
               }
             }
           } ~
+          // --- Update health checks  --- //
+          path("api" / "v1" / "settings" / "health_checks") {
+            put {
+              entity(as[JObject]) { data =>
+                val urls = getList(data,"endpoints",isRequired=true).get.asInstanceOf[List[String]]
+                handleHealthChecksApiRequest(UpdateHealthCheckUrls(urls))
+              }
+            }
+          }~
+          // --- Get health checks  --- //
+          path("api" / "v1" / "settings" / "health_checks" ) {
+            get {
+              handleHealthChecksApiRequest(GetHealthChecksRq())
+            }
+          }~
           // --- Get kerberos instance name --- //
           path("api" / "v1" / "settings" / "kerberos" / "instance_name" / Segment / Segment / Segment) { (ip, username, password) =>
             get {
@@ -292,7 +307,7 @@ with AccessTokenAuthenticator with CORSSupport with SensorComponent {
 
         /* Zones Status management */
         pathPrefix("api" / "v1" / "zones" / "status") {
-          post {
+          put {
             // --- Update zone status --- //
             entity(as[JObject]) { data =>
               // TODO if system is armed do not allow any updates
@@ -307,14 +322,14 @@ with AccessTokenAuthenticator with CORSSupport with SensorComponent {
 
           /* Zones metadata management */
         } ~ pathPrefix("api" / "v1" / "zones") {
-          put {
+          post {
             // --- Create new zone --- //
             entity(as[JObject]) { data =>
               val zone = new Zone()
               zone.fromJObject(data, false)
               handleZonesApiRequest(CreateZoneRq(user, zone))
             }
-          } ~ post {
+          } ~ put {
             // --- Update existing zone --- //
             entity(as[JObject]) { data =>
               val zone = new Zone()
@@ -386,14 +401,14 @@ with AccessTokenAuthenticator with CORSSupport with SensorComponent {
             handleSensorTypesApiRequest(GetAllSensorTypesRq())
           }
         } ~ pathPrefix("api" / "v1" / "sensors") {
-          put {
+          post {
             // --- Register new sensor --- //
             entity(as[JObject]) { data =>
               val sensor = new Sensor()
               sensor.fromJObject(data, false)
               handleSensorApiRequest(CreateSensorRq(sensor))
             }
-          } ~ post {
+          } ~ put {
             // --- Update sensor --- //
             entity(as[JObject]) { data =>
               val sensor = new Sensor()
@@ -412,6 +427,20 @@ with AccessTokenAuthenticator with CORSSupport with SensorComponent {
           } ~ get {
             // --- Get all sensors --- //
             handleSensorApiRequest(GetAllSensorsRq())
+          }
+        }
+      }
+    }
+
+
+  /** Routes for statistics **/
+  val sensorEventStatistics =
+    cors {
+      authenticate(tokenAuthenticator) { user =>
+        // --- Get minutely stats for a sensor --- //
+        pathPrefix("api" / "v1" / "statistics" / "sensors") {
+          get {
+            handleStatisticsApiRequest(GetStats())
           }
         }
       }
@@ -452,6 +481,13 @@ with AccessTokenAuthenticator with CORSSupport with SensorComponent {
 
   def handleKerberosApiRequest(message: KerberosManagementProtocol): Route =
     ctx => perRequest(actorRefFactory, ctx, KerberosManagementActor.props(), message)
+
+  def handleStatisticsApiRequest(message: SensorEventStatisticsProtocol): Route =
+    ctx => perRequest(actorRefFactory, ctx, StatisticsServiceActor.props(), message)
+
+  def handleHealthChecksApiRequest(message: HealthCheckProtocol): Route =
+    ctx => perRequest(actorRefFactory, ctx, HealthCheckServiceActor.props(), message)
+
 
 
   /**
